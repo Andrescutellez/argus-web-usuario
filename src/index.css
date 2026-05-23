@@ -1,0 +1,90 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* ── Tema oscuro (por defecto) ── */
+:root,
+[data-theme="dark"] {
+  --bg:         #0D1117;
+  --card:       #161B22;
+  --card-alt:   #1C2128;
+  --border:     #30363D;
+  --border-sub: #21262D;
+  --text1:      #E6EDF3;
+  --text2:      #8B949E;
+  --text3:      #484F58;
+  --blue:       #2F81F7;
+  --blue-10:    rgba(47, 129, 247, 0.1);
+  --blue-20:    rgba(47, 129, 247, 0.2);
+  --armed:      #E5484D;
+  --armed-10:   rgba(229, 72, 77, 0.1);
+  --armed-20:   rgba(229, 72, 77, 0.2);
+  --green:      #3FB950;
+  --green-10:   rgba(63, 185, 80, 0.1);
+  --orange:     #D29922;
+  --orange-10:  rgba(210, 153, 34, 0.1);
+  --red:        #F85149;
+  --shadow:     0 4px 24px rgba(0,0,0,0.4);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.3);
+  --map-bg:     #0A0E14;
+}
+
+/* ── Tema claro ── */
+[data-theme="light"] {
+  --bg:         #F6F8FA;
+  --card:       #FFFFFF;
+  --card-alt:   #F6F8FA;
+  --border:     #D0D7DE;
+  --border-sub: #EAEEF2;
+  --text1:      #1C2128;
+  --text2:      #57606A;
+  --text3:      #8C959F;
+  --blue:       #0969DA;
+  --blue-10:    rgba(9, 105, 218, 0.1);
+  --blue-20:    rgba(9, 105, 218, 0.2);
+  --armed:      #CF222E;
+  --armed-10:   rgba(207, 34, 46, 0.1);
+  --armed-20:   rgba(207, 34, 46, 0.2);
+  --green:      #1A7F37;
+  --green-10:   rgba(26, 127, 55, 0.1);
+  --orange:     #9A6700;
+  --orange-10:  rgba(154, 103, 0, 0.1);
+  --red:        #CF222E;
+  --shadow:     0 4px 24px rgba(0,0,0,0.1);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
+  --map-bg:     #E8EFF4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Leaflet */
+.leaflet-container {
+  background: var(--map-bg);
+}
+
+[data-theme="dark"] .leaflet-tile-pane {
+  filter: brightness(0.85) saturate(0.7);
+}
+
+/* Scrollbar discreta */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* Transiciones suaves en tarjetas */
+.argus-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.argus-card:hover {
+  border-color: var(--border) !important;
+}
