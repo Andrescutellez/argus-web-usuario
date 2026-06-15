@@ -367,8 +367,9 @@ export const getGisNearCuadrantes = (lon, lat, limit = 5) =>
  *   }>
  * }>>}
  */
-export const getLluvia     = () => api.get('/api/weather/lluvia')
+export const getLluvia      = () => api.get('/api/weather/lluvia')
 export const getRadarBounds = () => api.get('/api/weather/radar/bounds')
+export const getRadarImage  = () => api.get('/api/weather/radar/image', { responseType: 'blob' })
 export { BASE_URL }
 
 // ─── Suscripción ──────────────────────────────────────────────────────────

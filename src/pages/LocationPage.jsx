@@ -46,7 +46,7 @@ import { useStore } from '../store/useStore.js'
 import {
   getLatestGps, getDeviceStatus, sendCommand,
   getMotos, getGisLookup, getGisNear, getGisNearCuadrantes,
-  getRadarBounds, BASE_URL,
+  getRadarBounds, getRadarImage,
 } from '../api/apiService.js'
 import { connect, disconnect } from '../api/realtimeService.js'
 
@@ -212,12 +212,14 @@ export default function LocationPage() {
   const [nearCuadrantes, setNearCuadrantes] = useState(null)   // GeoJSON FeatureCollection local
 
   // Radar SIRE — overlay de reflectividad en tiempo real
-  const [radarBounds, setRadarBounds] = useState(null)  // [[s,w],[n,e]] para ImageOverlay
-  const [radarTs,     setRadarTs]     = useState(0)     // ts del backend para cache-bust de imagen
-  const [showRain,    setShowRain]    = useState(false)  // toggle capa radar
+  const [radarBounds,   setRadarBounds]   = useState(null)   // [[s,w],[n,e]] para ImageOverlay
+  const [radarTs,       setRadarTs]       = useState(0)      // ts del último fetch (debug)
+  const [radarImageUrl, setRadarImageUrl] = useState(null)   // blob URL — la img cargada con auth
+  const [showRain,      setShowRain]      = useState(false)  // toggle capa radar
 
-  const pollingRef = useRef(null)
-  const gisRef     = useRef({ lastLon: null, lastLat: null }) // evita lookups duplicados
+  const pollingRef    = useRef(null)
+  const gisRef        = useRef({ lastLon: null, lastLat: null })
+  const radarBlobRef  = useRef(null) // ref al blob URL activo para poder revocarlo
 
   // ─── Fetchers ───────────────────────────────────────────────────────────────
 
@@ -288,7 +290,7 @@ export default function LocationPage() {
 
     pollingRef.current = setInterval(() => { fetchGps(); fetchStatus() }, 30_000)
 
-    // Radar SIRE — bounds del KMZ, fetch inicial + refresh cada 5 min
+    // Radar SIRE — bounds + imagen (via blob URL para enviar auth header)
     const fetchRadar = async () => {
       try {
         const { data } = await getRadarBounds()
@@ -296,13 +298,25 @@ export default function LocationPage() {
           const { north, south, east, west } = data.bounds
           setRadarBounds([[south, west], [north, east]])
           setRadarTs(data.ts)
+          // ImageOverlay usa <img> internamente — no envía Authorization.
+          // Descargamos con axios (que sí tiene el token) y creamos un blob URL local.
+          const imgResp = await getRadarImage()
+          if (radarBlobRef.current) URL.revokeObjectURL(radarBlobRef.current)
+          const blobUrl = URL.createObjectURL(imgResp.data)
+          radarBlobRef.current = blobUrl
+          setRadarImageUrl(blobUrl)
         }
       } catch { /* radar es opcional */ }
     }
     fetchRadar()
     const rainInterval = setInterval(fetchRadar, 5 * 60 * 1000)
 
-    return () => { clearInterval(pollingRef.current); clearInterval(rainInterval); disconnect() }
+    return () => {
+      clearInterval(pollingRef.current)
+      clearInterval(rainInterval)
+      disconnect()
+      if (radarBlobRef.current) URL.revokeObjectURL(radarBlobRef.current)
+    }
   }, [deviceId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dispara GIS la primera vez que hay GPS (desde REST inicial)
@@ -381,9 +395,9 @@ export default function LocationPage() {
 
           {/* Radar SIRE — overlay de reflectividad. La imagen PNG ya viene coloreada
                por el SIRE (verde=leve → rojo=muy fuerte). opacity 0.65 para ver el mapa. */}
-          {showRain && radarBounds && (
+          {showRain && radarBounds && radarImageUrl && (
             <ImageOverlay
-              url={`${BASE_URL}/api/weather/radar/image?t=${radarTs}`}
+              url={radarImageUrl}
               bounds={radarBounds}
               opacity={0.65}
             />
