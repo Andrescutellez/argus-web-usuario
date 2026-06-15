@@ -286,6 +286,91 @@ export const updateMoto = (motoId, data) =>
 export const assignDevice = (motoId, deviceId) =>
   api.post(`/api/motos/${motoId}/assign-device`, { deviceId })
 
+// ─── GIS ──────────────────────────────────────────────────────────────────
+
+/**
+ * @brief Jerarquía territorial y cuadrante policial de un punto GPS.
+ *
+ * PROPÓSITO:
+ *   Enriquece cualquier coordenada con: localidad, UPZ, sector catastral,
+ *   cuadrante policial y —lo más valioso— el teléfono del patrullero asignado.
+ *
+ * @param {number} lon  Longitud WGS-84
+ * @param {number} lat  Latitud WGS-84
+ * @returns {Promise<AxiosResponse<{
+ *   loc_nombre, upl_nombre, sca_nombre,
+ *   pcu_codigo, pcu_nombre, pcu_nom_cai, pcu_nom_est, pcu_telefono
+ * }>>}
+ */
+export const getGisLookup = (lon, lat) =>
+  api.get('/api/gis/lookup', { params: { lon, lat } })
+
+/**
+ * @brief POIs policiales más cercanos a un punto GPS.
+ *
+ * @param {number} lon      Longitud WGS-84
+ * @param {number} lat      Latitud WGS-84
+ * @param {'cai'|'estacion'} type  Tipo de POI
+ * @param {number} [limit=3]       Máximo de resultados
+ * @returns {Promise<AxiosResponse<Array<{nombre, direccion, lat, lon, telefono, distancia_m}>>>}
+ */
+export const getGisNear = (lon, lat, type = 'cai', limit = 3) =>
+  api.get('/api/gis/near', { params: { lon, lat, type, limit } })
+
+/**
+ * @brief GeoJSON de localidades con datos de hurto de motos (heatmap de riesgo).
+ *
+ * @returns {Promise<AxiosResponse<GeoJSON.FeatureCollection>>}
+ */
+export const getGisHeatmap = () =>
+  api.get('/api/gis/heatmap')
+
+/**
+ * @brief Los N cuadrantes policiales más cercanos al punto GPS.
+ * Devuelve GeoJSON FeatureCollection con ~5 cuadrantes (el contenedor + vecinos).
+ * Usado por el mapa de usuario para el overlay territorial local.
+ */
+export const getGisNearCuadrantes = (lon, lat, limit = 5) =>
+  api.get('/api/gis/cuadrantes-near', { params: { lon, lat, limit } })
+
+// ─── Weather ──────────────────────────────────────────────────────────────
+
+/**
+ * @brief Datos de lluvia en tiempo real de las estaciones SAB de Bogotá.
+ *
+ * PROPÓSITO:
+ *   Alimenta la capa de lluvia del mapa de usuario. Devuelve todas las
+ *   estaciones pluviométricas activas con su intensidad y acumulado del día,
+ *   listo para renderizar como círculos Leaflet en LocationPage.
+ *
+ * FUENTE: Sistema de Alertas de Bogotá (SAB) — proxy en el backend para
+ *   evitar problemas de CORS desde el browser.
+ *
+ * CACHÉ: El backend marca `stale: true` si la última actualización tiene
+ *   más de 15 minutos. El frontend puede mostrar un aviso al usuario.
+ *
+ * INTENSIDADES POSIBLES:
+ *   'sin_lluvia' | 'bajo' | 'moderado' | 'alto' | 'muy_alto'
+ *
+ * @returns {Promise<AxiosResponse<{
+ *   ok: boolean,
+ *   stale: boolean,
+ *   fuente: string,
+ *   ciudad: string,
+ *   actualizado: string,
+ *   total: number,
+ *   estaciones: Array<{
+ *     id: number, nombre: string, lat: number, lon: number,
+ *     valor_mm: number, acumulado_dia: number,
+ *     intensidad: string, localidad: string,
+ *     ultima_lectura: string, activa: boolean
+ *   }>
+ * }>>}
+ */
+export const getLluvia     = () => api.get('/api/weather/lluvia')
+export const getRadarBounds = () => api.get('/api/weather/radar/bounds')
+export { BASE_URL }
+
 // ─── Suscripción ──────────────────────────────────────────────────────────
 
 /**
@@ -325,6 +410,7 @@ export default api
    GET  /api/motos/:id            → detalle + device instalado
    PUT  /api/motos/:id            → actualizar moto
    POST /api/motos/:id/assign-device → vincular ESP32 a moto + usuario
+   GET  /api/weather/lluvia       → estaciones pluviométricas SAB (lluvia tiempo real)
 
    DIAGRAMA MENTAL:
    Componente React → importa función → api.get/post → interceptor inyecta JWT
