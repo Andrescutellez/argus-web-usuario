@@ -372,6 +372,42 @@ export const getRadarBounds = () => api.get('/api/weather/radar/bounds')
 export const getRadarImage  = () => api.get('/api/weather/radar/image', { responseType: 'blob' })
 export { BASE_URL }
 
+// ─── Criminalidad ────────────────────────────────────────────────────────────
+
+/** GeoJSON con 20 localidades de Bogotá + hurtos motos/autos (2018-2026) + cámaras. Cache 24h. */
+export const getCrimeBogota   = () => api.get('/api/crime/bogota')
+/** Datos de la localidad que contiene el punto GPS dado. */
+export const getCrimeLookup   = (lat, lon) => api.get('/api/crime/bogota/lookup', { params: { lat, lon } })
+/** Ranking de hurtos motos por departamento (últimos 12 meses, datos.gov.co). */
+export const getCrimeNacional = () => api.get('/api/crime/nacional')
+
+// ─── Conducción ───────────────────────────────────────────────────────────────
+
+/**
+ * @brief Métricas de conducción del MPU6050 para el período solicitado.
+ *
+ * PROPÓSITO:
+ *   Alimenta la DrivingPage con los datos reales del sensor de movimiento.
+ *   El backend agrega las sesiones DriveMetrics de MongoDB en score,
+ *   breakdown diario y lista de sesiones raw.
+ *
+ * ENDPOINT:
+ *   GET /api/drive/metrics/:deviceId?days=N&speedLimit=80
+ *   Respuesta 200: { deviceId, period, irc, ircLabel, pillars, stats, usage, impact, dailyBreakdown, recommendations, sessions }
+ *   Respuesta 200 vacía (sin actividad): { irc: 100, sessions: [] }
+ *
+ * PARA CUBRIR AMBOS PERÍODOS DEL TOGGLE:
+ *   Llamar con days=14 y filtrar en el cliente. Evita dos llamadas separadas
+ *   de red al cambiar entre "Esta semana" y "Semana pasada".
+ *
+ * @param {string} deviceId    ID del ESP32 (ej: 'ARGUS-1237E630')
+ * @param {number} days        Días hacia atrás desde hoy (default 14)
+ * @param {number} speedLimit  Límite de velocidad urbano en km/h (default 80)
+ * @returns {Promise<AxiosResponse>}
+ */
+export const getDriveMetrics = (deviceId, days = 14, speedLimit = 80) =>
+  api.get(`/api/drive/metrics/${deviceId}?days=${days}&speedLimit=${speedLimit}`)
+
 // ─── Suscripción ──────────────────────────────────────────────────────────
 
 /**
@@ -385,6 +421,56 @@ export { BASE_URL }
  */
 export const getSubscription = () =>
   api.get('/api/subscriptions/me')
+
+// ─── Geocerca de estacionamiento ─────────────────────────────────────────────
+
+/**
+ * @brief Crea una geocerca de estacionamiento y arma el dispositivo en modo silencioso.
+ *
+ * @param {string} deviceId   ID del ESP32
+ * @param {object} opts       { lat?, lng?, radiusM? } — coordenadas opcionales (fallback a último GPS del servidor)
+ * @returns {Promise<AxiosResponse<{ id, lat, lng, radiusM, expiresAt }>>}
+ */
+export const createGeofence = (deviceId, { lat, lng, radiusM = 80 } = {}) =>
+  api.post(`/api/geofence/${deviceId}`, { lat, lng, radiusM })
+
+/**
+ * @brief Retorna la geocerca activa del dispositivo, o rechaza con 404 si no tiene.
+ *
+ * @param {string} deviceId
+ * @returns {Promise<AxiosResponse<{ id, lat, lng, radius_m, expires_at }>>}
+ */
+export const getActiveGeofence = (deviceId) =>
+  api.get(`/api/geofence/${deviceId}`)
+
+/**
+ * @brief Cancela la geocerca activa y desarma el dispositivo.
+ *
+ * @param {string} deviceId
+ * @returns {Promise<AxiosResponse<{ message: string }>>}
+ */
+export const deleteGeofence = (deviceId) =>
+  api.delete(`/api/geofence/${deviceId}`)
+
+// Seguridad comunitaria — incidentes
+export const createIncidentApi = (deviceId, lat, lng) =>
+  api.post('/api/incidents', { deviceId, lat, lng, platform: 'web' })
+
+export const resolveIncidentApi = (incidentId, note = '') =>
+  api.patch(`/api/incidents/${incidentId}/resolve`, { resolutionNote: note })
+
+// ─── Argus Secure — Sala de Recuperación ─────────────────────────────────────
+
+/** Abre una Sala de Recuperación (propietario). Retorna roomData con tokens. */
+export const createSecureRoomApi = (vehicleId, lastKnownPosition = null) =>
+  api.post('/api/secure/rooms', {
+    vehicleId,
+    ...(lastKnownPosition ? { lastKnownPosition } : {}),
+  })
+
+/** Cierra la sala con resolución. */
+export const closeSecureRoomApi = (roomName, resolution = 'RECOVERED') =>
+  api.delete(`/api/secure/rooms/${roomName}`, { data: { resolution } })
 
 export default api
 

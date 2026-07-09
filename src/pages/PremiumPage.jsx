@@ -1,195 +1,303 @@
-// PremiumPage — equivalente al GoldScreen de Flutter.
-// Muestra la comparativa de planes y botones de upgrade.
+// PremiumPage — rediseñada con la estética del GoldScreen de Flutter.
+// Header con gradiente oscuro fijo + glassmorphism + feature list con icon boxes + CTA con glow.
+
+import { useState } from 'react'
+
+// ── Datos ──────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: '⏱️', name: 'Heartbeat',         free: '1 hora',       premium: '30 segundos' },
-  { icon: '📡', name: 'Datos LTE',          free: '3 encendidos/día', premium: 'Continuo' },
-  { icon: '🗺️', name: 'Tracking en vivo',  free: '—',            premium: '✓' },
-  { icon: '🛰️', name: 'Red colaborativa',  free: '—',            premium: '✓' },
-  { icon: '🔔', name: 'Alertas avanzadas', free: 'Básicas',      premium: 'Todas' },
-  { icon: '🛡️', name: 'Anti-jammer',       free: '—',            premium: '✓' },
-  { icon: '✂️', name: 'Corte remoto',      free: '—',            premium: '✓' },
-  { icon: '📊', name: 'Métricas avanzadas',free: 'Semana',       premium: 'Todo el historial' },
+  { icon: '📍', title: 'Historial GPS 90 días',    desc: 'Revive cualquier ruta del último trimestre desde el mapa.',          premium: false },
+  { icon: '🔔', title: 'Alertas en tiempo real',   desc: 'Notificaciones instantáneas de movimiento y zona de riesgo.',        premium: false },
+  { icon: '⏱️', title: 'Heartbeat 30 segundos',   desc: 'Actualización de ubicación cada 30 seg en lugar de cada hora.',      premium: true  },
+  { icon: '📊', title: 'Analítica avanzada',        desc: 'Score detallado, agresividad, curvas y trayectos con mapa real.',   premium: true  },
+  { icon: '✂️', title: 'Corte remoto de motor',   desc: 'Bloquea el motor desde la app en segundos si detectas robo.',        premium: true  },
+  { icon: '🛡️', title: 'Anti-jammer detection',   desc: 'Detecta intentos de bloqueo de señal GPS/LTE por ladrones.',        premium: true  },
+  { icon: '🛰️', title: 'Red colaborativa Argus',  desc: 'Miles de usuarios que detectan y reportan motos robadas en tu zona.',premium: true  },
+  { icon: '📋', title: 'Reportes para seguros',     desc: 'Exporta tu historial de conducción certificado para aseguradoras.', premium: true  },
 ]
 
-function PlanCard({ title, price, period, features, isPremium, isCurrent, onSelect }) {
+// ── Componentes ────────────────────────────────────────────────────────────────
+
+function FeatureRow({ feature, isPremium }) {
+  const locked = feature.premium && !isPremium
+  const iconBg = feature.premium
+    ? 'rgba(240,160,48,0.12)'
+    : 'rgba(59,139,245,0.12)'
+  const iconBorder = feature.premium
+    ? '1px solid rgba(240,160,48,0.30)'
+    : '1px solid rgba(59,139,245,0.30)'
+
   return (
     <div style={{
-      flex: 1,
-      background: isPremium ? 'linear-gradient(145deg, #1a1f2e, #161B22)' : 'var(--card)',
-      border: isPremium
-        ? '2px solid rgba(47,129,247,0.5)'
-        : isCurrent ? '2px solid var(--border)' : '1px solid var(--border)',
-      borderRadius: 18,
-      padding: 24,
-      position: 'relative',
-      overflow: 'hidden',
+      display: 'flex', alignItems: 'center', gap: 14,
+      padding: '13px 16px',
+      opacity: locked ? 0.55 : 1,
     }}>
-      {isPremium && (
-        <div style={{
-          position: 'absolute', top: 14, right: 14,
-          padding: '3px 10px',
-          background: 'var(--blue)',
-          borderRadius: 20,
-          fontSize: 11, fontWeight: 700, color: '#fff',
-        }}>RECOMENDADO</div>
-      )}
-
-      <div style={{ fontSize: 28, marginBottom: 8 }}>{isPremium ? '⭐' : '🔓'}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text1)', marginBottom: 4 }}>{title}</div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 20 }}>
-        <span style={{ fontSize: 34, fontWeight: 800, color: isPremium ? 'var(--blue)' : 'var(--text1)' }}>
-          {price}
-        </span>
-        <span style={{ fontSize: 13, color: 'var(--text2)' }}>/{period}</span>
+      {/* Icon box 42×42 */}
+      <div style={{
+        width: 42, height: 42, flexShrink: 0,
+        background: iconBg,
+        border: iconBorder,
+        borderRadius: 12,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 20,
+      }}>
+        {feature.icon}
       </div>
 
-      <button
-        onClick={onSelect}
-        disabled={isCurrent}
-        style={{
-          width: '100%',
-          padding: '12px 0',
-          borderRadius: 10,
-          border: isCurrent ? '1px solid var(--border)' : 'none',
-          background: isCurrent
-            ? 'transparent'
-            : isPremium ? 'var(--blue)' : 'var(--card-alt)',
-          color: isCurrent ? 'var(--text3)' : '#fff',
-          fontSize: 14, fontWeight: 700,
-          cursor: isCurrent ? 'not-allowed' : 'pointer',
-          marginBottom: 20,
-        }}
-      >
-        {isCurrent ? 'Plan actual' : isPremium ? 'Activar Premium' : 'Seleccionar'}
-      </button>
-
-      {features.map((f, i) => (
-        <div key={i} style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 0',
-          borderBottom: i < features.length - 1 ? '1px solid var(--border-sub)' : 'none',
-          fontSize: 13,
-          color: f.enabled ? 'var(--text1)' : 'var(--text3)',
-        }}>
-          <span style={{ fontSize: 16 }}>{f.enabled ? '✓' : '—'}</span>
-          {f.text}
+      {/* Texto */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text1)' }}>
+            {feature.title}
+          </span>
+          {feature.premium && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: 'var(--orange)',
+              background: 'rgba(240,160,48,0.15)',
+              padding: '2px 6px', borderRadius: 6,
+            }}>
+              GOLD
+            </span>
+          )}
         </div>
-      ))}
+        <span style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>
+          {feature.desc}
+        </span>
+      </div>
+
+      {/* Chevron */}
+      <span style={{ fontSize: 14, color: 'var(--text3)', flexShrink: 0 }}>›</span>
     </div>
   )
 }
 
+function PlanOption({ price, label, popular, selected, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        padding: 16, borderRadius: 14, cursor: 'pointer',
+        background: selected
+          ? 'rgba(59,139,245,0.10)'
+          : popular ? 'rgba(59,139,245,0.06)' : 'var(--card-alt)',
+        border: selected
+          ? '1.5px solid var(--blue)'
+          : popular ? '1.5px solid rgba(59,139,245,0.35)' : '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text1)', marginBottom: 4 }}>
+          {label}
+        </div>
+        {popular && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#fff',
+            background: 'var(--blue)',
+            padding: '2px 8px', borderRadius: 8,
+          }}>
+            MÁS POPULAR
+          </span>
+        )}
+      </div>
+      <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--blue)' }}>
+        {price}
+      </span>
+    </div>
+  )
+}
+
+// ── Pantalla principal ─────────────────────────────────────────────────────────
+
 export default function PremiumPage() {
-  const freeFeatures = [
-    { enabled: true,  text: 'Alarma local BLE' },
-    { enabled: true,  text: 'Alertas básicas' },
-    { enabled: true,  text: 'Heartbeat 1 hora' },
-    { enabled: false, text: 'Tracking en vivo' },
-    { enabled: false, text: 'Red colaborativa Argus' },
-    { enabled: false, text: 'Anti-jammer' },
-  ]
-  const premiumFeatures = [
-    { enabled: true, text: 'Todo lo de Freemium' },
-    { enabled: true, text: 'Heartbeat 30 segundos' },
-    { enabled: true, text: 'Tracking en vivo continuo' },
-    { enabled: true, text: 'Red colaborativa Argus' },
-    { enabled: true, text: 'Anti-jammer detection' },
-    { enabled: true, text: 'Historial completo' },
-  ]
+  const isPremium = false   // placeholder — cuando haya auth real, viene del contexto
+  const [showModal, setShowModal] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('anual')
 
   return (
-    <div style={{ padding: 24, maxWidth: 880, background: 'var(--bg)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 32, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>⭐</div>
-        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--text1)' }}>
-          Argus Premium
-        </h1>
-        <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--text2)', lineHeight: 1.6 }}>
-          Protección completa con GPS continuo, red colaborativa y anti-jammer.
-        </p>
-      </div>
-
-      {/* Tarjetas de planes */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 36, flexWrap: 'wrap' }}>
-        <PlanCard
-          title="Freemium"
-          price="$0"
-          period="mes"
-          features={freeFeatures}
-          isPremium={false}
-          isCurrent={true}
-          onSelect={() => {}}
-        />
-        <PlanCard
-          title="Premium Mensual"
-          price="$9.99"
-          period="mes"
-          features={premiumFeatures}
-          isPremium={true}
-          isCurrent={false}
-          onSelect={() => alert('Próximamente: pasarela de pago Stripe')}
-        />
-        <PlanCard
-          title="Premium Anual"
-          price="$79.99"
-          period="año"
-          features={[...premiumFeatures, { enabled: true, text: '2 meses gratis' }]}
-          isPremium={false}
-          isCurrent={false}
-          onSelect={() => alert('Próximamente: pasarela de pago Stripe')}
-        />
-      </div>
-
-      {/* Tabla comparativa */}
-      <div style={{ marginBottom: 12 }}>
-        <div style={{
-          fontSize: 11, fontWeight: 600, letterSpacing: '1.2px',
-          color: 'var(--text3)', marginBottom: 12,
-        }}>COMPARATIVA DE CARACTERÍSTICAS</div>
-      </div>
+      {/* ── Header oscuro fijo ─────────────────────────────────────────────── */}
       <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: 14,
-        overflow: 'hidden',
+        background: '#0D1117',
+        borderBottom: '1px solid #21262D',
+        padding: '48px 24px 28px',
       }}>
-        {/* Cabecera */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-          padding: '12px 16px',
-          background: 'var(--card-alt)',
-          borderBottom: '1px solid var(--border)',
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>Característica</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', textAlign: 'center' }}>Freemium</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)', textAlign: 'center' }}>Premium ⭐</span>
-        </div>
-        {FEATURES.map((f, i) => (
-          <div key={i} style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-            padding: '12px 16px',
-            borderBottom: i < FEATURES.length - 1 ? '1px solid var(--border-sub)' : 'none',
-            alignItems: 'center',
+        {/* Ícono + título */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+          <div style={{
+            width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
+            background: 'rgba(255,255,255,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 16 }}>{f.icon}</span>
-              <span style={{ fontSize: 13, color: 'var(--text1)' }}>{f.name}</span>
-            </div>
-            <span style={{
-              textAlign: 'center', fontSize: 13,
-              color: f.free === '—' ? 'var(--text3)' : 'var(--text2)',
-            }}>{f.free}</span>
-            <span style={{
-              textAlign: 'center', fontSize: 13, fontWeight: 600,
-              color: f.premium === '✓' ? 'var(--green)' : 'var(--blue)',
-            }}>{f.premium}</span>
+            ⭐
           </div>
-        ))}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Argus Gold</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+              Protección máxima
+            </div>
+          </div>
+        </div>
+
+        {/* Glassmorphism — plan actual */}
+        <div style={{
+          background: 'rgba(255,255,255,0.10)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: 20, padding: '16px 18px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>
+              Tu plan actual
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+              {isPremium ? 'Gold' : 'Freemium'}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+              {isPremium ? 'Renovación automática activa' : 'Funciones básicas activas'}
+            </div>
+          </div>
+          {!isPremium && (
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                background: '#fff', color: '#1A65D0',
+                border: 'none', borderRadius: 14,
+                padding: '10px 18px',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              Mejorar →
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* ── Contenido ─────────────────────────────────────────────────────── */}
+      <div style={{ padding: '20px 16px 120px', maxWidth: 680, margin: '0 auto' }}>
+
+        {/* Título sección */}
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text1)', marginBottom: 12 }}>
+          {isPremium ? 'Incluido en tu membresía Gold' : '¿Qué incluye Gold?'}
+        </div>
+
+        {/* Lista de features */}
+        <div style={{
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: 14, overflow: 'hidden',
+          marginBottom: 24,
+        }}>
+          {FEATURES.map((f, i) => (
+            <div key={i} style={{
+              borderBottom: i < FEATURES.length - 1 ? '1px solid var(--border-sub)' : 'none',
+            }}>
+              <FeatureRow feature={f} isPremium={isPremium} />
+            </div>
+          ))}
+        </div>
+
+        {/* CTA — solo si no es premium */}
+        {!isPremium && (
+          <div>
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                width: '100%',
+                padding: '16px 0',
+                background: 'linear-gradient(90deg, #2F81F7, #1A65D0)',
+                boxShadow: '0 8px 24px rgba(47,129,247,0.35)',
+                border: 'none', borderRadius: 20,
+                color: '#fff', fontSize: 16, fontWeight: 800,
+                cursor: 'pointer', marginBottom: 10,
+              }}
+            >
+              Desbloquear análisis avanzado →
+            </button>
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text2)' }}>
+              Desde $9.99/mes · Cancela cuando quieras
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Modal de upgrade ──────────────────────────────────────────────── */}
+      {showModal && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.70)',
+            zIndex: 100, display: 'flex', alignItems: 'flex-end',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 520, margin: '0 auto',
+              background: 'var(--card)',
+              borderRadius: '24px 24px 0 0',
+              border: '1px solid var(--border)',
+              borderBottom: 'none',
+              padding: '24px 20px 40px',
+            }}
+          >
+            {/* Handle + close */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 20,
+            }}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text1)' }}>
+                Argus Gold
+              </span>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: 'none', border: 'none',
+                  fontSize: 20, color: 'var(--text2)', cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Opciones de plan */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 8 }}>
+              <PlanOption
+                price="$9.99"
+                label="Mensual"
+                popular={false}
+                selected={selectedPlan === 'mensual'}
+                onClick={() => setSelectedPlan('mensual')}
+              />
+              <PlanOption
+                price="$79.99"
+                label="Anual (ahorra 33%)"
+                popular={true}
+                selected={selectedPlan === 'anual'}
+                onClick={() => setSelectedPlan('anual')}
+              />
+            </div>
+
+            {/* CTA modal */}
+            <button
+              style={{
+                width: '100%', padding: '16px 0', marginTop: 8,
+                background: 'var(--blue)',
+                border: 'none', borderRadius: 18,
+                color: '#fff', fontSize: 16, fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              Comenzar prueba gratis 14 días
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

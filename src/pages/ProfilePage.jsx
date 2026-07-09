@@ -51,6 +51,9 @@ export default function ProfilePage() {
     ]).finally(() => setLoading(false))
   }, [])
 
+  // Deduplicar motos por id para evitar entradas repetidas desde el backend
+  const uniqueMotos = [...new Map(motos.map(m => [m.id ?? m.alias, m])).values()]
+
   const isDark  = theme === 'dark'
   const initial = (user?.email?.[0] ?? '?').toUpperCase()
   const planLabel = plan?.plan ?? 'FREEMIUM'
@@ -169,7 +172,7 @@ export default function ProfilePage() {
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
-      ) : motos.length > 0 ? motos.map((moto) => (
+      ) : uniqueMotos.length > 0 ? uniqueMotos.map((moto) => (
         <Card key={moto.id}>
           <InfoRow icon="🏷️" label="Apodo"   value={moto.alias}  />
           <InfoRow icon="🪪" label="Placa"   value={moto.placa}  />

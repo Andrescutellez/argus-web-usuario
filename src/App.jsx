@@ -40,7 +40,8 @@ import HistoryPage    from './pages/HistoryPage.jsx'
 import DrivingPage    from './pages/DrivingPage.jsx'
 import PremiumPage    from './pages/PremiumPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
-import ProfilePage    from './pages/ProfilePage.jsx'
+import ProfilePage       from './pages/ProfilePage.jsx'
+import RecoveryRoomPage from './pages/RecoveryRoomPage.jsx'
 
 /**
  * @brief Definición del router de la aplicación.
@@ -95,7 +96,8 @@ const router = createBrowserRouter([
       { path: 'history',  element: <HistoryPage />  },
       { path: 'driving',  element: <DrivingPage />  },
       { path: 'premium',  element: <PremiumPage />  },
-      { path: 'perfil',   element: <ProfilePage />  },
+      { path: 'perfil',         element: <ProfilePage />     },
+      { path: 'recovery-room', element: <RecoveryRoomPage /> },
     ],
   },
 

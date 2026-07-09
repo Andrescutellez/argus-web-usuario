@@ -38,7 +38,7 @@
  * @module pages/OnboardingPage
  */
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { createMoto, assignDevice, getMeApi } from '../api/apiService.js'
@@ -165,6 +165,44 @@ export default function OnboardingPage() {
 
   // ── Formulario Paso 2: ID del dispositivo ─────────────────────────────
   const [deviceIdInput, setDeviceIdInput] = useState('')
+
+  // ── Escaneo QR con cámara ─────────────────────────────────────────────
+  const [scanning, setScanning] = useState(false)
+  const videoRef   = useRef(null)
+  const controlRef = useRef(null)  // Referencia a IScannerControls de @zxing/browser
+
+  // Inicia o detiene el scanner de cámara cuando 'scanning' cambia.
+  useEffect(() => {
+    if (!scanning) {
+      controlRef.current?.stop()
+      controlRef.current = null
+      return
+    }
+    // Cargar @zxing/browser dinámicamente (evita aumentar el bundle inicial)
+    import('@zxing/browser').then(({ BrowserQRCodeReader }) => {
+      const reader = new BrowserQRCodeReader()
+      if (!videoRef.current) return
+      reader.decodeFromVideoDevice(undefined, videoRef.current, (result, _err, controls) => {
+        if (!result) return
+        const raw    = result.getText()
+        const parts  = raw.split(':')
+        if (parts[0]?.startsWith('ARGUS-')) {
+          // Solo necesitamos el deviceId — el token BLE es para la app móvil
+          setDeviceIdInput(parts[0])
+          controls.stop()
+          setScanning(false)
+        }
+      }).then(c => { controlRef.current = c })
+        .catch(() => setScanning(false))
+    }).catch(() => {
+      setScanning(false)
+      setError('No se pudo iniciar la cámara')
+    })
+    return () => {
+      controlRef.current?.stop()
+      controlRef.current = null
+    }
+  }, [scanning])
 
   // ── Estado UI compartido ──────────────────────────────────────────────
   const [loading, setLoading] = useState(false)
@@ -378,12 +416,64 @@ export default function OnboardingPage() {
                   Vinculá tu dispositivo
                 </h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>
-                  Ingresá el ID del dispositivo Argus que instalaste en tu moto.
-                  Lo encontrás en la etiqueta del hardware o en la app de configuración BLE.
+                  Escaneá el QR del dispositivo o ingresá el ID manualmente.
                 </p>
               </div>
 
               <form onSubmit={handleStep2} className="flex flex-col gap-4">
+
+                {/* ── Botón y visor de cámara QR ─────────────────────── */}
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScanning(s => !s)}
+                    className="w-full py-2.5 rounded-md text-sm font-semibold border transition-colors"
+                    style={{
+                      borderColor: scanning ? 'var(--red)' : 'var(--blue)',
+                      color:       scanning ? 'var(--red)' : 'var(--blue)',
+                      background:  'transparent',
+                    }}
+                  >
+                    {scanning ? '✕  Cancelar escaneo' : '⬛  Escanear QR del dispositivo'}
+                  </button>
+
+                  {/* Vista de cámara — visible solo cuando scanning=true */}
+                  {scanning && (
+                    <div
+                      className="relative rounded-xl overflow-hidden"
+                      style={{ background: '#000', aspectRatio: '1' }}
+                    >
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Marco de guía centrado */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div
+                          className="w-48 h-48 rounded-xl"
+                          style={{ border: '2px solid var(--blue)', boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}
+                        />
+                      </div>
+                      <p
+                        className="absolute bottom-3 left-0 right-0 text-center text-xs"
+                        style={{ color: 'rgba(255,255,255,0.8)' }}
+                      >
+                        Apuntá al código QR del dispositivo Argus
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Separador */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text3)' }}>o ingresar manualmente</span>
+                  <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+                </div>
+
                 <Field
                   label="ID del dispositivo"
                   value={deviceIdInput}
@@ -392,14 +482,15 @@ export default function OnboardingPage() {
                   required
                 />
 
-                {/* Ayuda visual sobre dónde encontrar el ID */}
-                <div
-                  className="rounded-lg p-3 text-xs"
-                  style={{ background: 'var(--blue-10)', color: 'var(--text2)' }}
-                >
-                  El ID del dispositivo tiene el formato <strong style={{ color: 'var(--blue)' }}>ARGUS-XXXXXXXX</strong> y
-                  está impreso en la etiqueta del módulo ESP32.
-                </div>
+                {deviceIdInput && (
+                  <div
+                    className="rounded-lg p-3 text-xs flex items-center gap-2"
+                    style={{ background: 'var(--blue-10)', color: 'var(--text2)' }}
+                  >
+                    <span style={{ color: 'var(--blue)' }}>●</span>
+                    Dispositivo: <strong style={{ color: 'var(--blue)' }}>{deviceIdInput}</strong>
+                  </div>
+                )}
 
                 {/* Mensaje de error */}
                 {error && (
@@ -407,10 +498,9 @@ export default function OnboardingPage() {
                 )}
 
                 <div className="flex gap-3 mt-1">
-                  {/* Botón volver al Paso 1 para corregir datos de la moto */}
                   <button
                     type="button"
-                    onClick={() => { setStep(1); setError('') }}
+                    onClick={() => { setStep(1); setError(''); setScanning(false) }}
                     disabled={loading}
                     className="flex-1 py-2 rounded-md text-sm font-medium transition-opacity disabled:opacity-50"
                     style={{ background: 'var(--card-alt)', color: 'var(--text2)' }}
@@ -419,7 +509,7 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !deviceIdInput.trim()}
                     className="flex-1 py-2 rounded-md text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ background: 'var(--blue)', color: '#fff' }}
                   >

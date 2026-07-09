@@ -16,8 +16,11 @@
     "vite": "^8.0.10"
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "axios": "^1.15.2",
     "leaflet": "^1.9.4",
+    "maplibre-gl": "^5.24.0",
+    "pmtiles": "^4.4.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-leaflet": "^5.0.0",

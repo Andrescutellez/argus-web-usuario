@@ -1,90 +1,233 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-/* ── Tema oscuro (por defecto) ── */
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ─────────────────────────────────────────────
+   ARGUS DESIGN SYSTEM — Tema oscuro (default)
+   Paleta: dark tactical — navy profundo + naranja
+   táctico como accent de marca
+   ───────────────────────────────────────────── */
 :root,
 [data-theme="dark"] {
-  --bg:         #0D1117;
-  --card:       #161B22;
-  --card-alt:   #1C2128;
-  --border:     #30363D;
-  --border-sub: #21262D;
-  --text1:      #E6EDF3;
-  --text2:      #8B949E;
-  --text3:      #484F58;
-  --blue:       #2F81F7;
-  --blue-10:    rgba(47, 129, 247, 0.1);
-  --blue-20:    rgba(47, 129, 247, 0.2);
+  /* Fondos — de más oscuro a más claro */
+  --bg:         #080C12;
+  --card:       #0F1520;
+  --card-alt:   #161E2D;
+  --card-hover: #1C2738;
+
+  /* Bordes */
+  --border:     #1E2D42;
+  --border-sub: #162030;
+
+  /* Texto — jerarquía clara */
+  --text1:      #EEF2F8;
+  --text2:      #7E95B0;
+  --text3:      #3D5270;
+
+  /* Colores funcionales */
+  --blue:       #3B8BF5;
+  --blue-10:    rgba(59, 139, 245, 0.1);
+  --blue-20:    rgba(59, 139, 245, 0.2);
+
+  /* Accent — naranja táctico Argus (marca) */
+  --accent:     #FF6B35;
+  --accent-10:  rgba(255, 107, 53, 0.1);
+  --accent-20:  rgba(255, 107, 53, 0.2);
+
+  /* Estado armado */
   --armed:      #E5484D;
   --armed-10:   rgba(229, 72, 77, 0.1);
   --armed-20:   rgba(229, 72, 77, 0.2);
+
+  /* Semánticos */
   --green:      #3FB950;
   --green-10:   rgba(63, 185, 80, 0.1);
-  --orange:     #D29922;
-  --orange-10:  rgba(210, 153, 34, 0.1);
+  --orange:     #F0A030;
+  --orange-10:  rgba(240, 160, 48, 0.1);
   --red:        #F85149;
-  --shadow:     0 4px 24px rgba(0,0,0,0.4);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.3);
-  --map-bg:     #0A0E14;
+
+  /* Sombras */
+  --shadow:     0 4px 32px rgba(0,0,0,0.6);
+  --shadow-sm:  0 2px 12px rgba(0,0,0,0.4);
+  --shadow-lg:  0 8px 48px rgba(0,0,0,0.7);
+
+  /* Mapa */
+  --map-bg:     #05090F;
+
+  /* Z-index escala global */
+  --z-base:     10;
+  --z-dropdown: 20;
+  --z-overlay:  30;
+  --z-modal:    50;
+  --z-toast:    100;
 }
 
 /* ── Tema claro ── */
 [data-theme="light"] {
-  --bg:         #F6F8FA;
+  --bg:         #F0F4F9;
   --card:       #FFFFFF;
-  --card-alt:   #F6F8FA;
-  --border:     #D0D7DE;
-  --border-sub: #EAEEF2;
-  --text1:      #1C2128;
-  --text2:      #57606A;
-  --text3:      #8C959F;
-  --blue:       #0969DA;
-  --blue-10:    rgba(9, 105, 218, 0.1);
-  --blue-20:    rgba(9, 105, 218, 0.2);
+  --card-alt:   #F6F9FC;
+  --card-hover: #EBF1F8;
+
+  --border:     #C8D8E8;
+  --border-sub: #DDE8F0;
+
+  --text1:      #0F1E2E;
+  --text2:      #4A6480;
+  --text3:      #8AA0B8;
+
+  --blue:       #1A6FD4;
+  --blue-10:    rgba(26, 111, 212, 0.1);
+  --blue-20:    rgba(26, 111, 212, 0.2);
+
+  --accent:     #E85520;
+  --accent-10:  rgba(232, 85, 32, 0.1);
+  --accent-20:  rgba(232, 85, 32, 0.2);
+
   --armed:      #CF222E;
-  --armed-10:   rgba(207, 34, 46, 0.1);
-  --armed-20:   rgba(207, 34, 46, 0.2);
+  --armed-10:   rgba(207, 34, 46, 0.08);
+  --armed-20:   rgba(207, 34, 46, 0.16);
+
   --green:      #1A7F37;
   --green-10:   rgba(26, 127, 55, 0.1);
-  --orange:     #9A6700;
-  --orange-10:  rgba(154, 103, 0, 0.1);
+  --orange:     #8A5C00;
+  --orange-10:  rgba(138, 92, 0, 0.1);
   --red:        #CF222E;
-  --shadow:     0 4px 24px rgba(0,0,0,0.1);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
-  --map-bg:     #E8EFF4;
+
+  --shadow:     0 4px 24px rgba(15, 30, 46, 0.1);
+  --shadow-sm:  0 2px 8px rgba(15, 30, 46, 0.06);
+  --shadow-lg:  0 8px 48px rgba(15, 30, 46, 0.15);
+
+  --map-bg:     #DDE8F0;
 }
 
-* { box-sizing: border-box; }
+/* ─── Reset & Base ─── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; } /* base 16px — WCAG mobile requirement */
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text1);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  /* Sora para UI, sistema como fallback */
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1rem;        /* 16px */
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-/* Leaflet */
-.leaflet-container {
-  background: var(--map-bg);
+/* Fuente monoespaciada para coordenadas, IDs, datos crudos */
+.font-mono, code, kbd, pre {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
+/* ─── Accesibilidad — focus visible ─── */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ─── Interactividad — botones y links ─── */
+button, a, [role="button"] {
+  transition: opacity 0.15s ease, background 0.15s ease,
+              color 0.15s ease, border-color 0.15s ease,
+              box-shadow 0.15s ease;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ─── Leaflet ─── */
+.leaflet-container { background: var(--map-bg); }
 [data-theme="dark"] .leaflet-tile-pane {
-  filter: brightness(0.85) saturate(0.7);
+  filter: brightness(0.82) saturate(0.65);
 }
 
-/* Scrollbar discreta */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Scrollbar discreta ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-/* Transiciones suaves en tarjetas */
+/* ─── Tarjetas con hover ─── */
 .argus-card {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .argus-card:hover {
-  border-color: var(--border) !important;
+  border-color: var(--border-sub) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── Skeleton / shimmer para loading states ─── */
+@keyframes argus-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.argus-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card-alt) 25%,
+    var(--card-hover) 50%,
+    var(--card-alt) 75%
+  );
+  background-size: 800px 100%;
+  animation: argus-shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ─── Animación de entrada suave ─── */
+@keyframes argus-fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.argus-fadein {
+  animation: argus-fadein 0.25s ease forwards;
+}
+
+/* ─── Badge de notificación ─── */
+.argus-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--armed);
+  color: #fff;
+}
+
+/* ─── Accent button (CTA principal de marca) ─── */
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.btn-accent:hover:not(:disabled) {
+  background: #e55a27;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+/* ─── Touch targets mínimos (44×44px WCAG) ─── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

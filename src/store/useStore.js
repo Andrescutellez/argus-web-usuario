@@ -139,6 +139,7 @@ export const useStore = create((set) => ({
       alerts: [],
       motos: [],
       subscription: null,
+      alarmActive: false,
     })
   },
 
@@ -184,9 +185,20 @@ export const useStore = create((set) => ({
 
   /**
    * @brief Actualiza el estado del dispositivo en el store.
-   * @param {object} status  Respuesta de GET /api/device/:deviceId/status
+   * Acepta valor directo o función (s => nuevoEstado) para actualizaciones optimistas
+   * que necesitan leer el estado anterior.
+   * @param {object|Function} updater  Nuevo estado o función (prev) => nuevoEstado
    */
-  setStatus: (status) => set({ status }),
+  setStatus: (updater) => typeof updater === 'function'
+    ? set(s => ({ status: updater(s.status) }))
+    : set({ status: updater }),
+
+  /**
+   * true cuando la sirena está activa por activación manual del usuario.
+   * Compartido entre LocationPage y SecurityPage para sincronizar el botón.
+   */
+  alarmActive: false,
+  setAlarmActive: (v) => set({ alarmActive: v }),
 
   // ── Alerts ────────────────────────────────────────────────────────────
 
@@ -257,6 +269,25 @@ export const useStore = create((set) => ({
    * @param {object} subscription  Datos del plan desde el backend
    */
   setSubscription: (subscription) => set({ subscription }),
+
+  // ── Geocerca de estacionamiento ────────────────────────────────────────
+
+  /**
+   * Estado de la geocerca activa. Compartido entre SecurityPage (escribe) y
+   * LocationPage (lee para dibujar el círculo en el mapa).
+   * Se resetea a false al cancelar, al hacer logout y al salir del radio.
+   */
+  parkActive: false,
+  parkLat:    null,
+  parkLng:    null,
+  parkRadius: 80,
+
+  /**
+   * @brief Actualiza el estado de la geocerca. Llamado desde SecurityPage.
+   * @param {{ active, lat, lng, radius }} state
+   */
+  setParkState: ({ active, lat = null, lng = null, radius = 80 }) =>
+    set({ parkActive: active, parkLat: lat, parkLng: lng, parkRadius: radius }),
 
   // ── Device ID derivado ─────────────────────────────────────────────────
 
