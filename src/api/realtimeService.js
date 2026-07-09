@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://34.69.219.193:3000'
+// Dominio oficial de producción — nunca IPs (regla 2026-07-09). Dev: VITE_API_URL en .env.local
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.argussecure.online'
 
 let socket = null
 

@@ -8,7 +8,7 @@
  *
  * VARIABLES CRÍTICAS:
  *   BASE_URL      — Dirección del backend. Viene de VITE_API_URL en .env.
- *                   Si no está definida, apunta al servidor GCP de producción.
+ *                   Si no está definida, apunta a https://api.argussecure.online.
  *   argus_token   — JWT almacenado en localStorage. Se inyecta en CADA request.
  *                   Si se corrompe o expira, el interceptor redirige a /login.
  *
@@ -27,9 +27,10 @@
 
 import axios from 'axios'
 
-// BASE_URL: fallback a GCP solo en producción real.
+// BASE_URL: fallback al dominio oficial de producción (nunca IPs — regla 2026-07-09:
+// una migración de servidor solo debe requerir cambiar DNS, no tocar código).
 // Desarrollo: definir VITE_API_URL=http://localhost:3000 en .env.local
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://34.69.219.193:3000'
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.argussecure.online'
 
 /**
  * @brief Instancia axios preconfigurada con baseURL y timeout estándar.
