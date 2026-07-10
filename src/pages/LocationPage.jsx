@@ -398,7 +398,13 @@ export default function LocationPage() {
     if (!deviceId) return
     try {
       const { data } = await getLatestGps(deviceId)
-      if (data?.lat && data?.lon) setGps(data)
+      if (data?.lat && data?.lon) {
+        setGps(data)
+        // Si el último GPS almacenado es reciente, tratar como EN VIVO sin esperar socket
+        if (data.timestamp && Date.now() - new Date(data.timestamp).getTime() < 30_000) {
+          setLiveTs(Date.now())
+        }
+      }
     } catch { /* offline */ }
   }, [deviceId, setGps])
 
@@ -794,9 +800,10 @@ export default function LocationPage() {
   // ── Derivados ─────────────────────────────────────────────────────────────
 
   const engineCut      = status?.motorCut ?? false
-  const isTcpConn      = status?.connected ?? false
   const hasGps         = !!(gps?.lat && gps?.lon)
   const isLive         = liveTs != null && Date.now() - liveTs < 90_000
+  // Si tenemos GPS en vivo inferimos que la conexión 4G está activa
+  const isTcpConn      = (status?.connected ?? false) || isLive
   const isGpsSleep     = isTcpConn && !isLive && hasGps
   const isMoving       = (gps?.speed ?? 0) > 8
   const firmwareMoving = ['STATE_MOVING','STATE_ALERT','STATE_PURSUIT'].includes(deviceState)
