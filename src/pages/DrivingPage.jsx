@@ -32,6 +32,7 @@ const MIN_TRIP_KM = 0.1
 
 const DRIVE_HARD_ACCEL_G  = 0.60
 const DRIVE_HARD_GYRO_DPS = 50.0
+const DRIVE_MIN_SPEED_KMH = 10
 
 // ─── Información de todas las tarjetas ────────────────────────────────────────
 // Estructura: { icon, title, sub?, desc, tips? }
@@ -183,8 +184,8 @@ function tripDurationMs(trip) {
 function tripStoppedSec(trip)    { return trip.reduce((s, x) => s + (x.stoppedSec || 0), 0) }
 function tripDrivingSec(trip)    { return trip.reduce((s, x) => s + Math.max(0, 30 - (x.stoppedSec || 0)), 0) }
 function tripMaxSpeed(trip)      { return trip.reduce((m, s) => Math.max(m, s.maxSpeedKmh ?? s.avgSpeedKmh ?? 0), 0) }
-function tripHardEvents(trip)    { return trip.filter(s => s.peakAccelDev >= DRIVE_HARD_ACCEL_G).length }
-function tripCurveEvents(trip)   { return trip.filter(s => s.peakGyroMag  >= DRIVE_HARD_GYRO_DPS).length }
+function tripHardEvents(trip)    { return trip.filter(s => (s.avgSpeedKmh ?? 0) >= DRIVE_MIN_SPEED_KMH && s.peakAccelDev >= DRIVE_HARD_ACCEL_G).length }
+function tripCurveEvents(trip)   { return trip.filter(s => (s.avgSpeedKmh ?? 0) >= DRIVE_MIN_SPEED_KMH && s.peakGyroMag  >= DRIVE_HARD_GYRO_DPS).length }
 function tripHasStoppedData(trip){ return trip.some(s => s.stoppedSec !== null && s.stoppedSec !== undefined) }
 
 function groupIntoTrips(sessions) {
