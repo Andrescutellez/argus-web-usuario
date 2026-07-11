@@ -473,6 +473,24 @@ export const createSecureRoomApi = (vehicleId, lastKnownPosition = null) =>
 export const closeSecureRoomApi = (roomName, resolution = 'RECOVERED') =>
   api.delete(`/api/secure/rooms/${roomName}`, { data: { resolution } })
 
+// ─── Comunidades ──────────────────────────────────────────────────────────────
+export const getCommunityFeed    = (before)         => api.get('/api/communities/feed', { params: before ? { before } : {} })
+export const getMyCommunities    = ()               => api.get('/api/communities/mine')
+export const exploreCommunities  = (search = '', offset = 0) => api.get('/api/communities/explore', { params: { search, offset } })
+export const getCommunity        = (id)             => api.get(`/api/communities/${id}`)
+export const createCommunity     = (body)           => api.post('/api/communities', body)
+export const updateCommunity     = (id, body)       => api.patch(`/api/communities/${id}`, body)
+export const deleteCommunity     = (id)             => api.delete(`/api/communities/${id}`)
+export const joinCommunity       = (id)             => api.post(`/api/communities/${id}/join`)
+export const leaveCommunity      = (id)             => api.delete(`/api/communities/${id}/leave`)
+export const getCommunityPosts   = (id, before)     => api.get(`/api/communities/${id}/posts`, { params: before ? { before } : {} })
+export const createCommunityPost = (id, body)       => api.post(`/api/communities/${id}/posts`, body)
+export const deleteCommunityPost = (id, postId)     => api.delete(`/api/communities/${id}/posts/${postId}`)
+export const createInvitation    = (id)             => api.post(`/api/communities/${id}/invitations`)
+export const useInvitationToken  = (token)          => api.post(`/api/communities/join/${token}`)
+export const getPrivacyPrefs     = ()               => api.get('/api/communities/privacy/prefs')
+export const updatePrivacyPrefs  = (body)           => api.patch('/api/communities/privacy/prefs', body)
+
 export default api
 
 /* ═══════════════════════════════════════════════════════════

@@ -42,6 +42,7 @@ import PremiumPage    from './pages/PremiumPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import ProfilePage       from './pages/ProfilePage.jsx'
 import RecoveryRoomPage from './pages/RecoveryRoomPage.jsx'
+import CommunityPage    from './pages/CommunityPage.jsx'
 
 /**
  * @brief Definición del router de la aplicación.
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
       { path: 'premium',  element: <PremiumPage />  },
       { path: 'perfil',         element: <ProfilePage />     },
       { path: 'recovery-room', element: <RecoveryRoomPage /> },
+      { path: 'community',     element: <CommunityPage />   },
     ],
   },
 
