@@ -376,8 +376,15 @@ export default function CommunityPage() {
   const [explore,     setExplore]     = useState([])
   const [explLoading, setExplLoading] = useState(true)
   const [search,      setSearch]      = useState('')
-  const [selected,    setSelected]    = useState(null) // communityId para el panel derecho
+  const [selected,    setSelected]    = useState(null)
   const [showCreate,  setShowCreate]  = useState(false)
+  const [isMobile,    setIsMobile]    = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   // myId desde el JWT en localStorage
   const myId = (() => {
@@ -444,13 +451,30 @@ export default function CommunityPage() {
     transition: 'all 0.15s',
   })
 
+  // En móvil con comunidad seleccionada → mostrar solo el detalle
+  if (isMobile && selected) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+        <CommunityDetail
+          key={selected}
+          communityId={selected}
+          myId={myId}
+          onBack={() => setSelected(null)}
+        />
+        {showCreate && <CreateModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg)' }}>
 
-      {/* Sidebar izquierdo — ancho fijo en desktop, siempre visible */}
+      {/* Sidebar/lista — en móvil ocupa todo, en desktop 360 px fijo */}
       <div style={{
-        width: 360, minWidth: 300, maxWidth: 400,
-        borderRight: '1px solid var(--border)',
+        width: isMobile ? '100%' : 360,
+        minWidth: isMobile ? 0 : 300,
+        maxWidth: isMobile ? '100%' : 400,
+        borderRight: isMobile ? 'none' : '1px solid var(--border)',
         display: 'flex', flexDirection: 'column',
         flexShrink: 0,
         background: 'var(--bg)',
@@ -536,31 +560,33 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      {/* Panel derecho — detalle o placeholder */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {selected ? (
-          <CommunityDetail
-            key={selected}
-            communityId={selected}
-            myId={myId}
-            onBack={() => setSelected(null)}
-          />
-        ) : (
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 12,
-            color: 'var(--text3)',
-          }}>
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.3 }}>
-              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-            </svg>
-            <span style={{ fontSize: 15, fontWeight: 500 }}>Selecciona una comunidad</span>
-            <span style={{ fontSize: 13, maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>
-              Elige un grupo de la lista o crea uno nuevo para ver su contenido
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Panel derecho — solo en desktop */}
+      {!isMobile && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+          {selected ? (
+            <CommunityDetail
+              key={selected}
+              communityId={selected}
+              myId={myId}
+              onBack={() => setSelected(null)}
+            />
+          ) : (
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 12,
+              color: 'var(--text3)',
+            }}>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.3 }}>
+                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+              </svg>
+              <span style={{ fontSize: 15, fontWeight: 500 }}>Selecciona una comunidad</span>
+              <span style={{ fontSize: 13, maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>
+                Elige un grupo de la lista o crea uno nuevo para ver su contenido
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal crear */}
       {showCreate && (
