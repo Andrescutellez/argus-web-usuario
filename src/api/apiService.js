@@ -491,6 +491,13 @@ export const useInvitationToken  = (token)          => api.post(`/api/communitie
 export const getPrivacyPrefs     = ()               => api.get('/api/communities/privacy/prefs')
 export const updatePrivacyPrefs  = (body)           => api.patch('/api/communities/privacy/prefs', body)
 
+// ─── Perfil social ────────────────────────────────────────────────────────────
+export const getMyProfile      = ()               => api.get('/api/profile/me')
+export const updateMyProfile   = (body)           => api.patch('/api/profile/me', body)
+export const changeUsername    = (username)       => api.patch('/api/profile/me/username', { username })
+export const checkUsername     = (username)       => api.get(`/api/profile/check/${encodeURIComponent(username)}`)
+export const getPublicProfile  = (username)       => api.get(`/api/profile/${encodeURIComponent(username)}`)
+
 export default api
 
 /* ═══════════════════════════════════════════════════════════
