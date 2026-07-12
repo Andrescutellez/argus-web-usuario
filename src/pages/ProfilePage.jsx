@@ -251,7 +251,8 @@ export default function ProfilePage() {
   const [city,        setCity]        = useState('')
   const [isPublic,    setIsPublic]    = useState(true)
   const [saving,      setSaving]      = useState(false)
-  const [saveMsg,     setSaveMsg]     = useState('')  // '' | 'ok' | 'error'
+  const [saveMsg,     setSaveMsg]     = useState('')   // '' | 'ok'
+  const [saveError,   setSaveError]   = useState('')  // mensaje de error específico
 
   useEffect(() => {
     Promise.allSettled([
@@ -274,6 +275,7 @@ export default function ProfilePage() {
   async function handleSaveProfile() {
     setSaving(true)
     setSaveMsg('')
+    setSaveError('')
     try {
       const { data } = await updateMyProfile({
         displayName: displayName.trim() || null,
@@ -284,9 +286,10 @@ export default function ProfilePage() {
       setProfile(data)
       setSaveMsg('ok')
       setTimeout(() => setSaveMsg(''), 3000)
-    } catch {
-      setSaveMsg('error')
-      setTimeout(() => setSaveMsg(''), 4000)
+    } catch (err) {
+      const msg = err?.response?.data?.message ?? 'No se pudo guardar. Intenta de nuevo.'
+      setSaveError(msg)
+      setTimeout(() => setSaveError(''), 4000)
     } finally {
       setSaving(false)
     }
@@ -416,9 +419,13 @@ export default function ProfilePage() {
                 Perfil actualizado correctamente
               </div>
             )}
-            {saveMsg === 'error' && (
-              <div style={{ marginTop: 10, fontSize: 13, color: '#E5484D', textAlign: 'center' }}>
-                No se pudo guardar. Intenta de nuevo.
+            {saveError && (
+              <div style={{
+                marginTop: 10, fontSize: 13, color: '#E5484D',
+                background: 'rgba(229,72,77,0.08)', borderRadius: 8,
+                padding: '8px 12px', textAlign: 'center',
+              }}>
+                {saveError}
               </div>
             )}
           </>
