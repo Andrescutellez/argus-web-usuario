@@ -4,9 +4,10 @@ import {
   getCommunityFeed, getMyCommunities, exploreCommunities,
   getCommunity, createCommunity, joinCommunity, leaveCommunity,
   getCommunityPosts, createCommunityPost, deleteCommunityPost,
-  createInvitation,
+  addCommunityMember,
 } from '../api/apiService.js'
 import { getSocket } from '../api/realtimeService.js'
+import UserSearchModal from '../components/UserSearchModal.jsx'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -178,11 +179,11 @@ function CommunityDetail({ communityId, myId, onBack }) {
   const [posts,   setPosts]   = useState([])
   const [loading, setLoading] = useState(true)
   const [isMember, setIsMember] = useState(false)
-  const [composing, setComposing] = useState(false)
-  const [content, setContent] = useState('')
-  const [posting, setPosting] = useState(false)
-  const [invToken, setInvToken] = useState(null)
-  const [copied, setCopied]   = useState(false)
+  const [composing,   setComposing]   = useState(false)
+  const [content,     setContent]     = useState('')
+  const [posting,     setPosting]     = useState(false)
+  const [showInvite,  setShowInvite]  = useState(false)
+  const [inviteMsg,   setInviteMsg]   = useState(null)  // { ok, text }
 
   useEffect(() => {
     load()
@@ -238,15 +239,16 @@ function CommunityDetail({ communityId, myId, onBack }) {
     setPosts(p => p.filter(x => x.id !== post.id))
   }
 
-  async function handleInvite() {
-    const res = await createInvitation(communityId).catch(() => null)
-    if (res?.data?.token) { setInvToken(res.data.token); setCopied(false) }
-  }
-
-  function copyToken() {
-    navigator.clipboard.writeText(invToken)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  async function handleAddMember(profile) {
+    try {
+      await addCommunityMember(communityId, profile.username)
+      setDetail(d => d ? { ...d, member_count: d.member_count + 1 } : d)
+      setInviteMsg({ ok: true, text: `${profile.display_name || profile.username} añadido a la comunidad` })
+    } catch (err) {
+      const msg = err?.response?.data?.message ?? 'No se pudo añadir al usuario'
+      setInviteMsg({ ok: false, text: msg })
+    }
+    setTimeout(() => setInviteMsg(null), 3500)
   }
 
   if (loading) return (
@@ -279,7 +281,7 @@ function CommunityDetail({ communityId, myId, onBack }) {
             <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>👥 {detail.member_count} miembros</div>
           </div>
           {isAdmin && (
-            <button onClick={handleInvite} style={{
+            <button onClick={() => setShowInvite(true)} style={{
               background: 'rgba(47,129,247,0.1)', border: '1px solid rgba(47,129,247,0.3)',
               color: '#2F81F7', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12,
             }}>+ Invitar</button>
@@ -300,19 +302,20 @@ function CommunityDetail({ communityId, myId, onBack }) {
         {detail.description && (
           <div style={{ color: 'var(--text2)', fontSize: 13, paddingLeft: 4 }}>{detail.description}</div>
         )}
-        {invToken && (
+        {inviteMsg && (
           <div style={{
-            marginTop: 10, background: 'var(--card-alt)', border: '1px solid var(--border)',
-            borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <span style={{ color: 'var(--text2)', fontSize: 12 }}>Código de invitación:</span>
-            <code style={{ color: '#2F81F7', fontSize: 13, flex: 1 }}>{invToken}</code>
-            <button onClick={copyToken} style={{
-              background: 'none', border: '1px solid var(--border)', borderRadius: 6,
-              padding: '3px 10px', cursor: 'pointer', color: copied ? '#3FB950' : 'var(--text2)', fontSize: 12,
-            }}>{copied ? '✓ Copiado' : 'Copiar'}</button>
-          </div>
+            marginTop: 10, borderRadius: 8, padding: '10px 14px',
+            background: inviteMsg.ok ? 'rgba(63,185,80,0.1)' : 'rgba(229,72,77,0.1)',
+            border: `1px solid ${inviteMsg.ok ? 'rgba(63,185,80,0.3)' : 'rgba(229,72,77,0.3)'}`,
+            color: inviteMsg.ok ? '#3FB950' : '#E5484D',
+            fontSize: 13,
+          }}>{inviteMsg.ok ? '✓ ' : '✕ '}{inviteMsg.text}</div>
         )}
+        <UserSearchModal
+          open={showInvite}
+          onClose={() => setShowInvite(false)}
+          onSelect={handleAddMember}
+        />
       </div>
 
       {/* Compose area */}
