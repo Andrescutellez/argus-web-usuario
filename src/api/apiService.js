@@ -497,6 +497,7 @@ export const updateMyProfile   = (body)           => api.patch('/api/profile/me'
 export const changeUsername    = (username)       => api.patch('/api/profile/me/username', { username })
 export const checkUsername     = (username)       => api.get(`/api/profile/check/${encodeURIComponent(username)}`)
 export const getPublicProfile  = (username)       => api.get(`/api/profile/${encodeURIComponent(username)}`)
+export const searchProfiles    = (q)              => api.get('/api/profile/search', { params: { q } })
 
 export default api
 

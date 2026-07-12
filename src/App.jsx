@@ -41,8 +41,9 @@ import DrivingPage    from './pages/DrivingPage.jsx'
 import PremiumPage    from './pages/PremiumPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import ProfilePage       from './pages/ProfilePage.jsx'
-import RecoveryRoomPage from './pages/RecoveryRoomPage.jsx'
-import CommunityPage    from './pages/CommunityPage.jsx'
+import RecoveryRoomPage   from './pages/RecoveryRoomPage.jsx'
+import CommunityPage      from './pages/CommunityPage.jsx'
+import PublicProfilePage  from './pages/PublicProfilePage.jsx'
 
 /**
  * @brief Definición del router de la aplicación.
@@ -97,9 +98,10 @@ const router = createBrowserRouter([
       { path: 'history',  element: <HistoryPage />  },
       { path: 'driving',  element: <DrivingPage />  },
       { path: 'premium',  element: <PremiumPage />  },
-      { path: 'perfil',         element: <ProfilePage />     },
-      { path: 'recovery-room', element: <RecoveryRoomPage /> },
-      { path: 'community',     element: <CommunityPage />   },
+      { path: 'perfil',         element: <ProfilePage />        },
+      { path: 'recovery-room', element: <RecoveryRoomPage />   },
+      { path: 'community',     element: <CommunityPage />      },
+      { path: 'u/:username',   element: <PublicProfilePage />  },
     ],
   },
 
