@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getCommunityFeed, getMyCommunities, exploreCommunities,
   getCommunity, createCommunity, joinCommunity, leaveCommunity,
@@ -64,8 +65,9 @@ function PrivacyBadge({ privacy }) {
 // ─── PostCard ─────────────────────────────────────────────────────────────────
 
 function PostCard({ post, showCommunity = false, onDelete, myId }) {
-  const isTheft = post.type === 'THEFT_ALERT'
-  const canDel  = myId === post.author_id
+  const navigate = useNavigate()
+  const isTheft  = post.type === 'THEFT_ALERT'
+  const canDel   = myId === post.author_id
 
   return (
     <div style={{
@@ -77,7 +79,15 @@ function PostCard({ post, showCommunity = false, onDelete, myId }) {
         <UserAvatar name={post.author_name} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ color: 'var(--text1)', fontWeight: 600, fontSize: 13 }}>{post.author_name}</span>
+            <span
+              onClick={post.author_username ? () => navigate(`/u/${post.author_username}`) : undefined}
+              style={{
+                color: 'var(--text1)', fontWeight: 600, fontSize: 13,
+                cursor: post.author_username ? 'pointer' : 'default',
+              }}
+              onMouseEnter={e => { if (post.author_username) e.currentTarget.style.textDecoration = 'underline' }}
+              onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}
+            >{post.author_name}</span>
             {showCommunity && post.community_name && (
               <>
                 <span style={{ color: 'var(--text3)', fontSize: 11 }}>en</span>
