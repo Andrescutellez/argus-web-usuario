@@ -201,30 +201,34 @@ function MembersModal({ communityId, myId, isAdmin, onClose }) {
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 400,
-        background: 'rgba(0,0,0,0.65)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', padding: 16,
-      }}
-      onClick={onClose}
-    >
+    <>
+      {/* Overlay */}
       <div
+        onClick={onClose}
         style={{
-          background: 'var(--card)', borderRadius: 14, width: '100%', maxWidth: 480,
-          maxHeight: '80vh', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)',
+          zIndex: 1000,
         }}
-        onClick={e => e.stopPropagation()}
-      >
+      />
+
+      {/* Panel */}
+      <div style={{
+        position: 'fixed', top: '10%', left: '50%', transform: 'translateX(-50%)',
+        width: 'min(94vw, 480px)', maxHeight: '78vh',
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 14, zIndex: 1001,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+        display: 'flex', flexDirection: 'column',
+      }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px', borderBottom: '1px solid var(--border)',
+          padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0,
         }}>
           <span style={{ color: 'var(--text1)', fontWeight: 700, fontSize: 15 }}>
             Miembros {!loading && `(${members.length})`}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 18 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 18, lineHeight: 1 }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -280,7 +284,7 @@ function MembersModal({ communityId, myId, isAdmin, onClose }) {
           ))}
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
