@@ -4,7 +4,7 @@ import {
   getCommunityFeed, getMyCommunities, exploreCommunities,
   getCommunity, createCommunity, joinCommunity, leaveCommunity,
   getCommunityPosts, createCommunityPost, deleteCommunityPost,
-  addCommunityMember,
+  addCommunityMember, getCommunityMembers, updateMemberRole, removeCommunityMember,
 } from '../api/apiService.js'
 import { getSocket } from '../api/realtimeService.js'
 import UserSearchModal from '../components/UserSearchModal.jsx'
@@ -172,6 +172,118 @@ function CommunityCard({ community, active, onClick }) {
   )
 }
 
+// ─── MembersModal ─────────────────────────────────────────────────────────────
+
+const ROLE_LABEL = { OWNER: 'Propietario', ADMIN: 'Admin', MEMBER: 'Miembro' }
+const ROLE_COLOR = { OWNER: '#3FB950', ADMIN: '#2F81F7', MEMBER: 'var(--text3)' }
+
+function MembersModal({ communityId, myId, isAdmin, onClose }) {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    getCommunityMembers(communityId)
+      .then(r => setMembers(r.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [communityId])
+
+  async function handleRoleChange(userId, newRole) {
+    await updateMemberRole(communityId, userId, newRole).catch(() => {})
+    setMembers(m => m.map(x => x.user_id === userId ? { ...x, role: newRole } : x))
+  }
+
+  async function handleRemove(userId) {
+    if (!window.confirm('¿Expulsar a este miembro de la comunidad?')) return
+    await removeCommunityMember(communityId, userId).catch(() => {})
+    setMembers(m => m.filter(x => x.user_id !== userId))
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 400,
+        background: 'rgba(0,0,0,0.65)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--card)', borderRadius: 14, width: '100%', maxWidth: 480,
+          maxHeight: '80vh', display: 'flex', flexDirection: 'column',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: '1px solid var(--border)',
+        }}>
+          <span style={{ color: 'var(--text1)', fontWeight: 700, fontSize: 15 }}>
+            Miembros {!loading && `(${members.length})`}
+          </span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 18 }}>✕</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text3)' }}>Cargando…</div>
+          ) : members.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text3)' }}>Sin miembros</div>
+          ) : members.map(m => (
+            <div key={m.user_id} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 20px', borderBottom: '1px solid var(--border)',
+            }}>
+              <UserAvatar name={m.display_name || m.username || '?'} size={36} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  onClick={m.username ? () => navigate(`/u/${m.username}`) : undefined}
+                  style={{
+                    color: 'var(--text1)', fontWeight: 600, fontSize: 13,
+                    cursor: m.username ? 'pointer' : 'default',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => { if (m.username) e.currentTarget.style.textDecoration = 'underline' }}
+                  onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}
+                >{m.display_name || m.username || 'Usuario'}</div>
+                {m.username && <div style={{ color: 'var(--text3)', fontSize: 11 }}>@{m.username}</div>}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: ROLE_COLOR[m.role] ?? 'var(--text3)', flexShrink: 0 }}>
+                {ROLE_LABEL[m.role] ?? m.role}
+              </span>
+              {isAdmin && m.role !== 'OWNER' && m.user_id !== myId && (
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                  {m.role === 'MEMBER' ? (
+                    <button
+                      onClick={() => handleRoleChange(m.user_id, 'ADMIN')}
+                      title="Hacer admin"
+                      style={{ background: 'rgba(47,129,247,0.1)', border: '1px solid rgba(47,129,247,0.3)', color: '#2F81F7', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 11 }}
+                    >↑ Admin</button>
+                  ) : (
+                    <button
+                      onClick={() => handleRoleChange(m.user_id, 'MEMBER')}
+                      title="Quitar admin"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 11 }}
+                    >↓ Miembro</button>
+                  )}
+                  <button
+                    onClick={() => handleRemove(m.user_id)}
+                    title="Expulsar"
+                    style={{ background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)', color: '#F85149', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 11 }}
+                  >✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── CommunityDetail (panel derecho) ─────────────────────────────────────────
 
 function CommunityDetail({ communityId, myId, onBack }) {
@@ -182,8 +294,9 @@ function CommunityDetail({ communityId, myId, onBack }) {
   const [composing,   setComposing]   = useState(false)
   const [content,     setContent]     = useState('')
   const [posting,     setPosting]     = useState(false)
-  const [showInvite,  setShowInvite]  = useState(false)
-  const [inviteMsg,   setInviteMsg]   = useState(null)  // { ok, text }
+  const [showInvite,   setShowInvite]  = useState(false)
+  const [inviteMsg,    setInviteMsg]   = useState(null)  // { ok, text }
+  const [showMembers,  setShowMembers] = useState(false)
 
   useEffect(() => {
     load()
@@ -280,6 +393,12 @@ function CommunityDetail({ communityId, myId, onBack }) {
             </div>
             <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>👥 {detail.member_count} miembros</div>
           </div>
+          {isMember && (
+            <button onClick={() => setShowMembers(true)} style={{
+              background: 'none', border: '1px solid var(--border)',
+              color: 'var(--text2)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12,
+            }}>👥 Miembros</button>
+          )}
           {isAdmin && (
             <button onClick={() => setShowInvite(true)} style={{
               background: 'rgba(47,129,247,0.1)', border: '1px solid rgba(47,129,247,0.3)',
@@ -316,6 +435,14 @@ function CommunityDetail({ communityId, myId, onBack }) {
           onClose={() => setShowInvite(false)}
           onSelect={handleAddMember}
         />
+        {showMembers && (
+          <MembersModal
+            communityId={communityId}
+            myId={myId}
+            isAdmin={isAdmin}
+            onClose={() => setShowMembers(false)}
+          />
+        )}
       </div>
 
       {/* Compose area */}
