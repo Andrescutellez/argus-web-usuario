@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   getCommunityFeed, getMyCommunities, exploreCommunities,
   getCommunity, createCommunity, joinCommunity, leaveCommunity,
@@ -426,7 +426,7 @@ export default function CommunityPage() {
   }
 
   async function handleCreate({ name, description, type, privacy }) {
-    const res = await createCommunity({ name, description, type, privacy }).catch(() => null)
+    const res = await createCommunity({ name, description, type, privacy })
     if (res?.data) {
       setMine(m => [res.data, ...m])
       setSelected(res.data.id)
@@ -557,13 +557,19 @@ function CreateModal({ onClose, onCreate }) {
   const [type, setType]       = useState('CLUB')
   const [privacy, setPrivacy] = useState('PUBLICA')
   const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
 
   const types = ['CLUB', 'EMPRESA', 'FAMILIA', 'BARRIO', 'CONCESIONARIO']
 
   async function submit() {
     if (!name.trim()) return
     setLoading(true)
-    await onCreate({ name: name.trim(), description: desc.trim() || undefined, type, privacy })
+    setError('')
+    try {
+      await onCreate({ name: name.trim(), description: desc.trim() || undefined, type, privacy })
+    } catch (e) {
+      setError('Error al crear la comunidad. Intenta de nuevo.')
+    }
     setLoading(false)
   }
 
@@ -575,18 +581,15 @@ function CreateModal({ onClose, onCreate }) {
       <div style={{
         background: 'var(--card)', border: '1px solid var(--border)',
         borderRadius: 16, padding: 28, width: '100%', maxWidth: 460,
+        margin: '0 16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h3 style={{ margin: 0, color: 'var(--text1)', fontSize: 17 }}>Nueva comunidad</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 18 }}>✕</button>
         </div>
 
-        <Field label="Nombre *">
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Club Riders Bogotá" />
-        </Field>
-        <Field label="Descripción" style={{ marginTop: 12 }}>
-          <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ resize: 'vertical' }} />
-        </Field>
+        <Field label="Nombre *" value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Club Riders Bogotá" />
+        <Field label="Descripción" value={desc} onChange={e => setDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ marginTop: 12 }} />
 
         <div style={{ marginTop: 12 }}>
           <label style={{ color: 'var(--text2)', fontSize: 12, fontWeight: 600 }}>Tipo</label>
@@ -614,10 +617,17 @@ function CreateModal({ onClose, onCreate }) {
           ))}
         </div>
 
+        {error && (
+          <div style={{ marginTop: 12, color: '#F85149', fontSize: 12, background: 'rgba(248,81,73,0.1)', borderRadius: 6, padding: '8px 12px' }}>
+            ⚠️ {error}
+          </div>
+        )}
+
         <button onClick={submit} disabled={loading || !name.trim()} style={{
-          width: '100%', marginTop: 20, padding: '12px',
+          width: '100%', marginTop: 16, padding: '12px',
           background: '#2F81F7', border: 'none', color: '#fff',
-          borderRadius: 10, cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          borderRadius: 10, cursor: loading || !name.trim() ? 'not-allowed' : 'pointer',
+          fontWeight: 700, fontSize: 14,
           opacity: (loading || !name.trim()) ? 0.5 : 1,
         }}>{loading ? 'Creando…' : 'Crear comunidad'}</button>
       </div>
@@ -627,17 +637,22 @@ function CreateModal({ onClose, onCreate }) {
 
 // ─── Utilidades de UI ─────────────────────────────────────────────────────────
 
-function Field({ label, children, style }) {
-  const inputStyle = {
-    width: '100%', background: 'var(--card-alt)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '8px 12px', color: 'var(--text1)', fontSize: 13,
-    fontFamily: 'inherit', boxSizing: 'border-box',
-    outline: 'none',
-  }
+const FIELD_INPUT_STYLE = {
+  width: '100%', background: 'var(--card-alt)', border: '1px solid var(--border)',
+  borderRadius: 8, padding: '8px 12px', color: 'var(--text1)', fontSize: 13,
+  fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none',
+}
+
+function Field({ label, value, onChange, placeholder, rows, style }) {
   return (
     <div style={style}>
       <label style={{ color: 'var(--text2)', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>{label}</label>
-      {React.cloneElement(children, { style: { ...inputStyle, ...children.props.style } })}
+      {rows
+        ? <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+            style={{ ...FIELD_INPUT_STYLE, resize: 'vertical' }} />
+        : <input value={value} onChange={onChange} placeholder={placeholder}
+            style={FIELD_INPUT_STYLE} />
+      }
     </div>
   )
 }
@@ -671,5 +686,3 @@ function Empty({ icon, title, sub, action, onAction }) {
   )
 }
 
-// React is needed for React.cloneElement
-import React from 'react'
