@@ -117,18 +117,20 @@ function PostCard({ post, showCommunity = false, onDelete, myId }) {
 
 // ─── CommunityCard ────────────────────────────────────────────────────────────
 
-function CommunityCard({ community, onClick }) {
+function CommunityCard({ community, active, onClick }) {
   return (
     <div
       onClick={onClick}
       style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
+        background: active ? 'color-mix(in srgb, #2F81F7 12%, var(--card))' : 'var(--card)',
+        border: `1px solid ${active ? '#2F81F7' : 'var(--border)'}`,
         borderRadius: 12, padding: 16, cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 14,
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.15s, background 0.15s',
+        marginBottom: 6,
       }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = '#2F81F7'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#2F81F7' }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'var(--border)' }}
     >
       <CommunityAvatar name={community.name} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -443,27 +445,27 @@ export default function CommunityPage() {
   })
 
   return (
-    <div style={{ display: 'flex', height: '100%', background: 'var(--bg)', position: 'relative' }}>
+    <div style={{ display: 'flex', height: '100%', background: 'var(--bg)' }}>
 
-      {/* Panel izquierdo: lista */}
+      {/* Sidebar izquierdo — ancho fijo en desktop, siempre visible */}
       <div style={{
-        width: selected ? 340 : '100%', maxWidth: selected ? 340 : 680,
-        borderRight: selected ? '1px solid var(--border)' : 'none',
+        width: 360, minWidth: 300, maxWidth: 400,
+        borderRight: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column',
-        transition: 'width 0.2s',
         flexShrink: 0,
+        background: 'var(--bg)',
       }}>
-        {/* Header */}
+        {/* Header sidebar */}
         <div style={{
           background: 'var(--card)', borderBottom: '1px solid var(--border)',
-          padding: '12px 16px',
+          padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ color: 'var(--text1)', fontWeight: 700, fontSize: 16 }}>Comunidades</span>
+          <span style={{ color: 'var(--text1)', fontWeight: 700, fontSize: 17 }}>Comunidades</span>
           <button onClick={() => setShowCreate(true)} style={{
             background: '#2F81F7', border: 'none', color: '#fff',
-            borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-          }}>+ Crear</button>
+            borderRadius: 8, padding: '7px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+          }}>+ Nueva</button>
         </div>
 
         {/* Tabs */}
@@ -473,38 +475,37 @@ export default function CommunityPage() {
           <button style={TAB_STYLE(tab === 'explore')} onClick={() => setTab('explore')}>Explorar</button>
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+        {/* Lista */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' }}>
 
-          {/* Feed */}
           {tab === 'feed' && (
             feedLoading ? <Spinner /> :
-            feed.length === 0 ? (
-              <Empty icon="📰" title="Tu feed está vacío" sub="Únete a una comunidad para ver publicaciones" />
-            ) : (
-              feed.map(p => <PostCard key={p.id} post={p} showCommunity myId={myId}
-                onDelete={async (post) => {
-                  await deleteCommunityPost(post.community_id, post.id).catch(() => {})
-                  setFeed(f => f.filter(x => x.id !== post.id))
-                }} />)
-            )
+            feed.length === 0
+              ? <Empty icon="📰" title="Tu feed está vacío" sub="Únete a una comunidad para ver publicaciones" />
+              : feed.map(p => (
+                  <PostCard key={p.id} post={p} showCommunity myId={myId}
+                    onDelete={async (post) => {
+                      await deleteCommunityPost(post.community_id, post.id).catch(() => {})
+                      setFeed(f => f.filter(x => x.id !== post.id))
+                    }} />
+                ))
           )}
 
-          {/* Mis comunidades */}
           {tab === 'mine' && (
             mineLoading ? <Spinner /> :
-            mine.length === 0 ? (
-              <Empty icon="👥" title="No estás en ningún grupo" sub="Crea uno o únete desde Explorar"
-                action="Crear comunidad" onAction={() => setShowCreate(true)} />
-            ) : (
-              mine.map(c => <CommunityCard key={c.id} community={c} onClick={() => setSelected(c.id)} />)
-            )
+            mine.length === 0
+              ? <Empty icon="👥" title="No estás en ningún grupo" sub="Crea uno o únete desde Explorar"
+                  action="Crear comunidad" onAction={() => setShowCreate(true)} />
+              : mine.map(c => (
+                  <CommunityCard key={c.id} community={c}
+                    active={selected === c.id}
+                    onClick={() => setSelected(c.id)} />
+                ))
           )}
 
-          {/* Explorar */}
           {tab === 'explore' && (
             <>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
@@ -513,6 +514,7 @@ export default function CommunityPage() {
                   style={{
                     flex: 1, background: 'var(--card)', border: '1px solid var(--border)',
                     borderRadius: 8, padding: '8px 12px', color: 'var(--text1)', fontSize: 13,
+                    outline: 'none',
                   }}
                 />
                 <button onClick={() => loadExplore()} style={{
@@ -521,27 +523,46 @@ export default function CommunityPage() {
                 }}>Buscar</button>
               </div>
               {explLoading ? <Spinner /> :
-                explore.length === 0 ? <Empty icon="🔍" title="Sin resultados" sub="Prueba otro término" /> :
-                explore.map(c => <CommunityCard key={c.id} community={c} onClick={() => setSelected(c.id)} />)
+                explore.length === 0
+                  ? <Empty icon="🔍" title="Sin resultados" sub="Prueba otro término" />
+                  : explore.map(c => (
+                      <CommunityCard key={c.id} community={c}
+                        active={selected === c.id}
+                        onClick={() => setSelected(c.id)} />
+                    ))
               }
             </>
           )}
         </div>
       </div>
 
-      {/* Panel derecho: detalle */}
-      {selected && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* Panel derecho — detalle o placeholder */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {selected ? (
           <CommunityDetail
             key={selected}
             communityId={selected}
             myId={myId}
             onBack={() => setSelected(null)}
           />
-        </div>
-      )}
+        ) : (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 12,
+            color: 'var(--text3)',
+          }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.3 }}>
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+            </svg>
+            <span style={{ fontSize: 15, fontWeight: 500 }}>Selecciona una comunidad</span>
+            <span style={{ fontSize: 13, maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>
+              Elige un grupo de la lista o crea uno nuevo para ver su contenido
+            </span>
+          </div>
+        )}
+      </div>
 
-      {/* Modal crear comunidad */}
+      {/* Modal crear */}
       {showCreate && (
         <CreateModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       )}
