@@ -503,6 +503,21 @@ export const getCommunityMembers    = (communityId)           => api.get(`/api/c
 export const updateMemberRole       = (communityId, userId, role) => api.patch(`/api/communities/${communityId}/members/${userId}/role`, { role })
 export const removeCommunityMember  = (communityId, userId)   => api.delete(`/api/communities/${communityId}/members/${userId}`)
 
+// ─── Garage ────────────────────────────────────────────────────────────────────
+export const getGarageScore          = ()            => api.get('/api/garage/score')
+export const getGarageDocuments      = ()            => api.get('/api/garage/documents')
+export const upsertGarageDocument    = (type, data)  => api.put(`/api/garage/documents/${type}`, data)
+export const getGarageMaintenance    = ()            => api.get('/api/garage/maintenance')
+export const upsertGarageMaintenance = (type, data)  => api.put(`/api/garage/maintenance/${type}`, data)
+export const getGarageFuel           = ()            => api.get('/api/garage/fuel')
+export const addGarageFuel           = (data)        => api.post('/api/garage/fuel', data)
+export const deleteGarageFuel        = (id)          => api.delete(`/api/garage/fuel/${id}`)
+export const getGarageExpenses       = ()            => api.get('/api/garage/expenses')
+export const addGarageExpense        = (data)        => api.post('/api/garage/expenses', data)
+export const deleteGarageExpense     = (id)          => api.delete(`/api/garage/expenses/${id}`)
+export const getGarageAgenda         = ()            => api.get('/api/garage/agenda')
+export const updateGarageOdometer    = (km)          => api.patch('/api/garage/odometer', { odometer_km: km })
+
 export default api
 
 /* ═══════════════════════════════════════════════════════════

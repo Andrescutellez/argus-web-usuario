@@ -43,6 +43,7 @@ import ProfilePage       from './pages/ProfilePage.jsx'
 import RecoveryRoomPage   from './pages/RecoveryRoomPage.jsx'
 import CommunityPage      from './pages/CommunityPage.jsx'
 import PublicProfilePage  from './pages/PublicProfilePage.jsx'
+import GaragePage         from './pages/GaragePage.jsx'
 
 /**
  * @brief Definición del router de la aplicación.
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
       { path: 'perfil',         element: <ProfilePage />        },
       { path: 'recovery-room', element: <RecoveryRoomPage />   },
       { path: 'community',     element: <CommunityPage />      },
+      { path: 'garage',        element: <GaragePage />         },
       { path: 'u/:username',   element: <PublicProfilePage />  },
     ],
   },
