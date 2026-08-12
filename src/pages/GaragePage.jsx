@@ -20,7 +20,7 @@ import { useStore } from '../store/useStore'
 import {
   getGarageScore,
   getGarageDocuments,    upsertGarageDocument,
-  getGarageMaintenance,  upsertGarageMaintenance,
+  getGarageMaintenance,  upsertGarageMaintenance, setGarageMaintenanceActive,
   getGarageFuel,         addGarageFuel,    deleteGarageFuel,
   getGarageExpenses,     addGarageExpense, deleteGarageExpense,
   getGarageAgenda,       updateGarageOdometer,
@@ -30,11 +30,9 @@ import {
 // ── Catálogos ──────────────────────────────────────────────────────────────────
 
 const DOC_CATALOG = {
-  SOAT:           { label: 'SOAT',                  emoji: '🛡️', hasExpiry: true,  hasProp: false },
-  TECNO:          { label: 'Tecnomecánica',          emoji: '🔬', hasExpiry: true,  hasProp: false },
-  LIC_CONDUCCION: { label: 'Licencia de conducción', emoji: '🪪', hasExpiry: true,  hasProp: false },
-  LIC_TRANSITO:   { label: 'Tarjeta de propiedad',   emoji: '📄', hasExpiry: false, hasProp: true  },
-  GARANTIA:       { label: 'Garantía',               emoji: '✅', hasExpiry: true,  hasProp: false },
+  SOAT:           { label: 'SOAT',                  emoji: '🛡️' },
+  TECNO:          { label: 'Tecnomecánica',          emoji: '🔬' },
+  LIC_CONDUCCION: { label: 'Licencia de conducción', emoji: '🪪' },
 }
 
 const MAINT_CATALOG = [
@@ -307,13 +305,11 @@ export default function GaragePage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text1)' }}>{info.label}</p>
                     <p style={{ margin: '2px 0 0', fontSize: 11, color: col }}>
-                      {!info.hasExpiry && existing
-                        ? 'Registrado'
-                        : !existing
-                          ? <span style={{ color: 'var(--text3)' }}>Toca para registrar</span>
-                          : daysLeft >= 0
-                            ? `Vence en ${daysLeft} días · ${fmtDate(existing.expires_at)}`
-                            : `Venció hace ${Math.abs(daysLeft)} días`
+                      {!existing
+                        ? <span style={{ color: 'var(--text3)' }}>Toca para registrar</span>
+                        : daysLeft >= 0
+                          ? `Vence en ${daysLeft} días · ${fmtDate(existing.expires_at)}`
+                          : `Venció hace ${Math.abs(daysLeft)} días`
                       }
                     </p>
                   </div>
@@ -334,6 +330,19 @@ export default function GaragePage() {
 
   const TabMantenimiento = () => {
     const maintMap = Object.fromEntries(maintenance.map(m => [m.type, m]))
+
+    const toggleActive = async (type, next) => {
+      // Optimista: refleja el cambio ya para que el switch no se sienta pegado.
+      setMaint(prev => prev.map(m => m.type === type ? { ...m, active: next } : m))
+      try {
+        const { data } = await setGarageMaintenanceActive(type, next)
+        setMaint(data)
+      } catch {
+        // Revertir si el backend rechazó el cambio.
+        setMaint(prev => prev.map(m => m.type === type ? { ...m, active: !next } : m))
+      }
+    }
+
     return (
       <div style={{ maxWidth: 640 }}>
         {/* Odómetro */}
@@ -356,14 +365,18 @@ export default function GaragePage() {
         </Card>
 
         <SectionLabel>Estado por ítem</SectionLabel>
+        <p style={{ margin: '-6px 0 12px', fontSize: 11, color: 'var(--text3)' }}>
+          Usa el interruptor para elegir qué mantenimientos quieres que Argus vigile.
+        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {MAINT_CATALOG.map(info => {
-            const rec   = maintMap[info.type]
-            const pct   = rec?.progress_pct ?? 0
-            const kmRem = rec?.km_remaining
-            const dyRem = rec?.days_remaining
-            const intKm = rec?.interval_km
-            const intDy = rec?.interval_days
+            const rec    = maintMap[info.type]
+            const active = rec?.active ?? true
+            const pct    = rec?.progress_pct ?? 0
+            const kmRem  = rec?.km_remaining
+            const dyRem  = rec?.days_remaining
+            const intKm  = rec?.interval_km
+            const intDy  = rec?.interval_days
 
             const subtitle = kmRem != null
               ? (kmRem > 0 ? `Faltan ${numFmt(Math.round(kmRem))} km` : '¡Vencido!')
@@ -378,18 +391,25 @@ export default function GaragePage() {
             return (
               <Card key={info.type}
                 onClick={() => setModal({ kind: 'maint', info, data: rec })}
-                danger={pct >= 100}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: rec ? 10 : 0 }}>
+                danger={active && pct >= 100}
+                style={{ opacity: active ? 1 : 0.55 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: (active && rec) ? 10 : 0 }}>
                   <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{info.emoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>{info.label}</p>
-                    {interval && <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--text3)' }}>{interval}</p>}
+                    {active
+                      ? interval && <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--text3)' }}>{interval}</p>
+                      : <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--text3)' }}>No vigilado</p>
+                    }
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: progressColor(pct), flexShrink: 0 }}>
-                    {subtitle}
-                  </span>
+                  {active && (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: progressColor(pct), flexShrink: 0 }}>
+                      {subtitle}
+                    </span>
+                  )}
+                  <Switch checked={active} onChange={next => toggleActive(info.type, next)} />
                 </div>
-                {rec && (
+                {active && rec && (
                   <>
                     <ProgressBar pct={pct} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
@@ -640,9 +660,6 @@ export default function GaragePage() {
     const { type, info, data: existing } = modal
     const [issuedAt,  setIssuedAt]  = useState(existing?.issued_at?.slice(0,10)  ?? '')
     const [expiresAt, setExpiresAt] = useState(existing?.expires_at?.slice(0,10) ?? '')
-    const [vin,       setVin]       = useState(existing?.vin         ?? '')
-    const [engineNum, setEngineNum] = useState(existing?.engine_num  ?? '')
-    const [cylCC,     setCylCC]     = useState(existing?.cylinder_cc ?? '')
     const [notes,     setNotes]     = useState(existing?.notes       ?? '')
     const [saving,    setSaving]    = useState(false)
 
@@ -651,9 +668,6 @@ export default function GaragePage() {
       const body = {}
       if (issuedAt)  body.issued_at  = issuedAt
       if (expiresAt) body.expires_at = expiresAt
-      if (vin)       body.vin         = vin
-      if (engineNum) body.engine_num  = engineNum
-      if (cylCC)     body.cylinder_cc = Number(cylCC)
       if (notes)     body.notes       = notes
       try {
         await upsertGarageDocument(type, body)
@@ -670,24 +684,9 @@ export default function GaragePage() {
         <Field label="Fecha de expedición">
           <input type="date" value={issuedAt} onChange={e => setIssuedAt(e.target.value)} style={inputStyle()} />
         </Field>
-        {info.hasExpiry && (
-          <Field label="Fecha de vencimiento *">
-            <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} style={inputStyle()} />
-          </Field>
-        )}
-        {info.hasProp && (
-          <>
-            <Field label="VIN / N° de chasis">
-              <input value={vin} onChange={e => setVin(e.target.value)} placeholder="Número de chasis" style={inputStyle()} />
-            </Field>
-            <Field label="N° de motor">
-              <input value={engineNum} onChange={e => setEngineNum(e.target.value)} placeholder="Número de motor" style={inputStyle()} />
-            </Field>
-            <Field label="Cilindraje (cc)">
-              <input type="number" value={cylCC} onChange={e => setCylCC(e.target.value)} placeholder="ej. 150" style={inputStyle()} />
-            </Field>
-          </>
-        )}
+        <Field label="Fecha de vencimiento *">
+          <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} style={inputStyle()} />
+        </Field>
         <Field label="Notas (opcional)">
           <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas adicionales" style={inputStyle()} />
         </Field>
@@ -974,6 +973,25 @@ export default function GaragePage() {
 }
 
 // ── Helpers de UI ──────────────────────────────────────────────────────────────
+
+const Switch = ({ checked, onChange }) => (
+  <div
+    onClick={e => { e.stopPropagation(); onChange(!checked) }}
+    role="switch"
+    aria-checked={checked}
+    style={{
+      width: 34, height: 20, borderRadius: 10, flexShrink: 0, cursor: 'pointer',
+      background: checked ? 'var(--accent)' : 'var(--border)',
+      position: 'relative', transition: 'background 0.15s',
+    }}
+  >
+    <div style={{
+      width: 16, height: 16, borderRadius: '50%', background: '#fff',
+      position: 'absolute', top: 2, left: checked ? 16 : 2,
+      transition: 'left 0.15s',
+    }} />
+  </div>
+)
 
 const AddBtn = ({ onClick }) => (
   <button

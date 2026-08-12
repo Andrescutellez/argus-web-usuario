@@ -509,6 +509,7 @@ export const getGarageDocuments      = ()            => api.get('/api/garage/doc
 export const upsertGarageDocument    = (type, data)  => api.put(`/api/garage/documents/${type}`, data)
 export const getGarageMaintenance    = ()            => api.get('/api/garage/maintenance')
 export const upsertGarageMaintenance = (type, data)  => api.put(`/api/garage/maintenance/${type}`, data)
+export const setGarageMaintenanceActive = (type, active) => api.patch(`/api/garage/maintenance/${type}/active`, { active })
 export const getGarageFuel           = ()            => api.get('/api/garage/fuel')
 export const addGarageFuel           = (data)        => api.post('/api/garage/fuel', data)
 export const deleteGarageFuel        = (id)          => api.delete(`/api/garage/fuel/${id}`)
