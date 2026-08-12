@@ -177,6 +177,7 @@ export default function GaragePage() {
   const [odometer,   setOdometer]   = useState(null)
   const [motoAlias,  setMotoAlias]  = useState(null)
   const [modal,      setModal]      = useState(null) // { kind, data }
+  const [saveError,  setSaveError]  = useState(null)
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -654,8 +655,14 @@ export default function GaragePage() {
       if (engineNum) body.engine_num  = engineNum
       if (cylCC)     body.cylinder_cc = Number(cylCC)
       if (notes)     body.notes       = notes
-      await upsertGarageDocument(type, body).catch(() => {})
-      closeModal(); loadAll()
+      try {
+        await upsertGarageDocument(type, body)
+        closeModal(); loadAll()
+      } catch (err) {
+        setSaveError(err?.response?.data?.message ?? 'No se pudo guardar. Verifica tu conexión.')
+      } finally {
+        setSaving(false)
+      }
     }
 
     return (
@@ -706,8 +713,14 @@ export default function GaragePage() {
       if (intKm)   body.interval_km   = Number(intKm)
       if (intDays) body.interval_days = Number(intDays)
       if (notes)   body.notes         = notes
-      await upsertGarageMaintenance(info.type, body).catch(() => {})
-      closeModal(); loadAll()
+      try {
+        await upsertGarageMaintenance(info.type, body)
+        closeModal(); loadAll()
+      } catch (err) {
+        setSaveError(err?.response?.data?.message ?? 'No se pudo guardar. Verifica tu conexión.')
+      } finally {
+        setSaving(false)
+      }
     }
 
     return (
@@ -752,8 +765,14 @@ export default function GaragePage() {
       if (price)  body.price_total  = Number(price)
       if (km)     body.odometer_km  = Number(km)
       if (notes)  body.notes        = notes
-      await addGarageFuel(body).catch(() => {})
-      closeModal(); loadAll()
+      try {
+        await addGarageFuel(body)
+        closeModal(); loadAll()
+      } catch (err) {
+        setSaveError(err?.response?.data?.message ?? 'No se pudo guardar. Verifica tu conexión.')
+      } finally {
+        setSaving(false)
+      }
     }
 
     return (
@@ -792,8 +811,14 @@ export default function GaragePage() {
       setSaving(true)
       const body = { category: cat, amount: Number(amount), logged_at: date }
       if (desc) body.description = desc
-      await addGarageExpense(body).catch(() => {})
-      closeModal(); loadAll()
+      try {
+        await addGarageExpense(body)
+        closeModal(); loadAll()
+      } catch (err) {
+        setSaveError(err?.response?.data?.message ?? 'No se pudo guardar. Verifica tu conexión.')
+      } finally {
+        setSaving(false)
+      }
     }
 
     return (
@@ -836,8 +861,14 @@ export default function GaragePage() {
       const n = Number(km)
       if (!n) return
       setSaving(true)
-      await updateGarageOdometer(n).catch(() => {})
-      closeModal(); loadAll()
+      try {
+        await updateGarageOdometer(n)
+        closeModal(); loadAll()
+      } catch (err) {
+        setSaveError(err?.response?.data?.message ?? 'No se pudo guardar. Verifica tu conexión.')
+      } finally {
+        setSaving(false)
+      }
     }
 
     return (
@@ -920,6 +951,24 @@ export default function GaragePage() {
       {modal?.kind === 'fuel'     && <ModalFuel />}
       {modal?.kind === 'expense'  && <ModalExpense />}
       {modal?.kind === 'odometer' && <ModalOdometer />}
+
+      {/* Toast de error al guardar */}
+      {saveError && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#EF4444', color: '#fff', borderRadius: 10,
+          padding: '10px 18px', fontSize: 13, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', gap: 10, maxWidth: 340,
+        }}>
+          <span>⚠️</span>
+          <span style={{ flex: 1 }}>{saveError}</span>
+          <button
+            onClick={() => setSaveError(null)}
+            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, padding: 0 }}
+          >✕</button>
+        </div>
+      )}
     </div>
   )
 }
