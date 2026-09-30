@@ -70,7 +70,7 @@ const NAV = [
   { to: '/security',  Icon: IcShield,   label: 'Seguridad'   },
   { to: '/driving',   Icon: IcSpeed,    label: 'Conducción'  },
   { to: '/garage',    Icon: IcGarage,   label: 'Garage'      },
-  { to: '/community', Icon: IcGroups,   label: 'Comunidades' },
+  // { to: '/community', Icon: IcGroups,   label: 'Comunidades' },  // oculto hasta lanzamiento
   { to: '/history',   Icon: IcHistory,  label: 'Historial'   },
   { to: '/perfil',    Icon: IcSettings, label: 'Config'      },
 ]
