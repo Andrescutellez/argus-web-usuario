@@ -169,7 +169,7 @@ export default function Layout() {
   // ─── Vista móvil ──────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
         {/* Contenido */}
         <main style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>

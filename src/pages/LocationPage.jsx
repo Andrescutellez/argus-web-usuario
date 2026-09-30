@@ -816,7 +816,7 @@ export default function LocationPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--map-bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--map-bg)' }}>
 
       {/* ── Mapa ─────────────────────────────────────────────────────── */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
@@ -961,11 +961,12 @@ export default function LocationPage() {
           </div>
         )}
 
-        {/* ── Botones flotantes derecha: acciones (recentrar, sirena, estilo) ── */}
+        {/* ── Botones flotantes — columna derecha ─────────────────── */}
         <div style={{
-          position: 'absolute', bottom: 200, right: 16, zIndex: 1000,
+          position: 'absolute', top: 70, right: 16, zIndex: 1000,
           display: 'flex', flexDirection: 'column', gap: 10,
         }}>
+          {/* Recentrar en la moto */}
           <MapFab onClick={() => {
             if (hasGps && mapRef.current) {
               userPannedRef.current = false
@@ -975,6 +976,7 @@ export default function LocationPage() {
             <span style={{ fontSize: 16 }}>📍</span>
           </MapFab>
 
+          {/* Toggle sirena */}
           <MapFab
             active={alarmActive}
             activeColor={C.armed}
@@ -986,24 +988,22 @@ export default function LocationPage() {
             <span style={{ fontSize: 16 }}>{alarmActive ? '🔕' : '🔔'}</span>
           </MapFab>
 
+          {/* Selector de estilo */}
           <MapFab onClick={() => setShowPicker(p => !p)}>
             <span style={{ fontSize: 18 }}>{mapStyle.icon}</span>
           </MapFab>
-        </div>
 
-        {/* ── Botones flotantes izquierda: capas (radar, cuadrantes, crimen) ── */}
-        <div style={{
-          position: 'absolute', bottom: 200, left: 16, zIndex: 1000,
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
+          {/* Toggle radar */}
           <MapFab active={showRain} activeColor="#2F81F7" onClick={() => setShowRain(r => !r)}>
             <span style={{ fontSize: 16 }}>{showRain ? '🌧️' : '☁️'}</span>
           </MapFab>
 
+          {/* Toggle cuadrantes */}
           <MapFab active={showCuadrantes} activeColor="#22C55E" onClick={() => setShowCuadrantes(s => !s)}>
             <span style={{ fontSize: 16 }}>🛡️</span>
           </MapFab>
 
+          {/* Toggle crimen */}
           <MapFab active={showCrime} activeColor="#E5484D"
             onClick={() => { setShowCrime(c => !c); setSelectedCrime(null) }}>
             <span style={{ fontSize: 15 }}>⚠️</span>
