@@ -989,7 +989,8 @@ function loadAutoSettings() {
 }
 
 export default function SecurityPage() {
-  const { status, setStatus, deviceId, addAlert, alarmActive, setAlarmActive, setParkState, gps, motos } = useStore()
+  const { status, setStatus, deviceId, deviceProtocol, addAlert, alarmActive, setAlarmActive, setParkState, gps, motos } = useStore()
+  const isGT06 = deviceProtocol === 'gt06'
   const navigate = useNavigate()
   const [loading, setLoading]       = useState(false)
   const [cmdLoading, setCmdLoading] = useState(null)
@@ -1330,33 +1331,39 @@ export default function SecurityPage() {
             onArm={() => handleGeoArm(radiusInput)}
             onCancel={handleGeoCancel}
           />
-          <BleAppOnlyCard />
-          <CommandsCard
-            cmdLoading={cmdLoading}
-            lastResult={lastResult}
-            engineCut={engineCut}
-            alarmActive={alarmActive}
-            onCommand={handleCommand}
-          />
-          <SensitivityCard
-            currentLevel={sensitivity}
-            onCommand={handleCommand}
-            cmdLoading={cmdLoading}
-          />
+          {!isGT06 && <BleAppOnlyCard />}
+          {!isGT06 && (
+            <CommandsCard
+              cmdLoading={cmdLoading}
+              lastResult={lastResult}
+              engineCut={engineCut}
+              alarmActive={alarmActive}
+              onCommand={handleCommand}
+            />
+          )}
+          {!isGT06 && (
+            <SensitivityCard
+              currentLevel={sensitivity}
+              onCommand={handleCommand}
+              cmdLoading={cmdLoading}
+            />
+          )}
         </div>
 
         {/* ── Columna derecha ── */}
         <div>
-          <BleAutomationCard />
+          {!isGT06 && <BleAutomationCard />}
           <EngineAutoCard
             autoCutOnArm={autoSettings.autoCutOnArm}
             autoRestoreOnDisarm={autoSettings.autoRestoreOnDisarm}
             onChange={handleAutoChange}
           />
-          <AutoSensitivityCard
-            enabled={autoSensitivity}
-            onToggle={handleAutoSensitivityToggle}
-          />
+          {!isGT06 && (
+            <AutoSensitivityCard
+              enabled={autoSensitivity}
+              onToggle={handleAutoSensitivityToggle}
+            />
+          )}
           <EmergencyCard
             cmdLoading={cmdLoading}
             engineCut={engineCut}
