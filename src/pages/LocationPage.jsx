@@ -329,7 +329,8 @@ function buildCircleGeoJson(lat, lng, radiusM) {
 
 export default function LocationPage() {
   const { gps, setGps, status, setStatus, deviceId, alarmActive, setAlarmActive, theme,
-          parkActive, parkLat, parkLng, parkRadius } = useStore()
+          parkActive, parkLat, parkLng, parkRadius, deviceProtocol } = useStore()
+  const isGT06 = deviceProtocol === 'gt06'
 
   // ── Estado UI ─────────────────────────────────────────────────────────────
   const [mapStyle,     setMapStyle]     = useState(DEFAULT_STYLE)
@@ -976,17 +977,19 @@ export default function LocationPage() {
             <span style={{ fontSize: 16 }}>📍</span>
           </MapFab>
 
-          {/* Toggle sirena */}
-          <MapFab
-            active={alarmActive}
-            activeColor={C.armed}
-            onClick={() => {
-              if (!alarmActive) { setAlarmActive(true);  runCmd('SIREN_ON') }
-              else              { setAlarmActive(false); runCmd('SIREN_OFF') }
-            }}
-          >
-            <span style={{ fontSize: 16 }}>{alarmActive ? '🔕' : '🔔'}</span>
-          </MapFab>
+          {/* Toggle sirena — solo ESP32 (GT06 no tiene SIREN_ON) */}
+          {!isGT06 && (
+            <MapFab
+              active={alarmActive}
+              activeColor={C.armed}
+              onClick={() => {
+                if (!alarmActive) { setAlarmActive(true);  runCmd('SIREN_ON') }
+                else              { setAlarmActive(false); runCmd('SIREN_OFF') }
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{alarmActive ? '🔕' : '🔔'}</span>
+            </MapFab>
+          )}
 
           {/* Selector de estilo */}
           <MapFab onClick={() => setShowPicker(p => !p)}>

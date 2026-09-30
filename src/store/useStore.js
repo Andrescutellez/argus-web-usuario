@@ -110,9 +110,8 @@ export const useStore = create((set) => ({
     set({
       token,
       user,
-      // deviceId es null si el usuario aún no tiene dispositivos asignados
-      // En ese caso, App.jsx redirige al flujo de onboarding
-      deviceId: user.deviceIds?.[0] ?? null,
+      deviceId:       user.devices?.[0]?.id       ?? user.deviceIds?.[0] ?? null,
+      deviceProtocol: user.devices?.[0]?.protocol ?? 'argus',
     })
   },
 
@@ -158,12 +157,11 @@ export const useStore = create((set) => ({
    * @param {object} userData  { id, email, role, deviceIds } — datos frescos del servidor
    */
   refreshUser: (userData) => {
-    // Actualizar localStorage con los nuevos datos del usuario
     localStorage.setItem('argus_user', JSON.stringify(userData))
     set({
       user: userData,
-      // Actualizar deviceId para desbloquear Location/Security/History
-      deviceId: userData.deviceIds?.[0] ?? null,
+      deviceId:       userData.devices?.[0]?.id       ?? userData.deviceIds?.[0] ?? null,
+      deviceProtocol: userData.devices?.[0]?.protocol ?? 'argus',
     })
   },
 
@@ -305,7 +303,8 @@ export const useStore = create((set) => ({
    *   No agregar el fallback hardcodeado en producción — puede apuntar
    *   al ESP32 físico de otro usuario si los IDs colisionan.
    */
-  deviceId: stored?.deviceIds?.[0] ?? import.meta.env.VITE_DEVICE_ID ?? null,
+  deviceId:       stored?.devices?.[0]?.id       ?? stored?.deviceIds?.[0] ?? import.meta.env.VITE_DEVICE_ID ?? null,
+  deviceProtocol: stored?.devices?.[0]?.protocol ?? 'argus',
 }))
 
 /* ═══════════════════════════════════════════════════════════
