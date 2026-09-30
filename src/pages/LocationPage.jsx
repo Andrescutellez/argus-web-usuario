@@ -1049,6 +1049,7 @@ export default function LocationPage() {
           else              { setAlarmActive(false); runCmd('SIREN_OFF') }
         }}
         onEngineCut={() => runCmd(engineCut ? 'ENGINE_RESTORE' : 'ENGINE_CUT')}
+        isGT06={isGT06}
       />
     </div>
   )
@@ -1227,6 +1228,7 @@ function BottomPanel({
   alarmActive, liveColor, liveLabel, connectionLabel, diag,
   gisInfo, selectedGis, nearbyCai, crimeInfo, engineCut,
   onClearSelectedGis, onArm, onDisarm, onAlarm, onEngineCut,
+  isGT06 = false,
 }) {
   const hasGps = !!(gps?.lat && gps?.lon)
   const [expanded, setExpanded] = useState(true)
@@ -1321,8 +1323,10 @@ function BottomPanel({
           <div style={{ maxHeight: expanded ? 400 : 0, opacity: expanded ? 1 : 0,
             overflow: 'hidden', transition: 'max-height 0.25s ease, opacity 0.2s ease' }}>
             <div style={{ display: 'flex', gap: 8 }}>
-              <ActionBtn label={alarmActive ? 'Silenciar' : 'Alarma'} icon="🔔"
-                active={alarmActive} activeColor={C.purple} onClick={onAlarm} />
+              {!isGT06 && (
+                <ActionBtn label={alarmActive ? 'Silenciar' : 'Alarma'} icon="🔔"
+                  active={alarmActive} activeColor={C.purple} onClick={onAlarm} />
+              )}
               <ActionBtn label={engineCut ? 'Restaurar motor' : 'Apagar motor'}
                 icon={engineCut ? '✅' : '✂️'} active={engineCut} activeColor={C.green} onClick={onEngineCut} />
             </div>
