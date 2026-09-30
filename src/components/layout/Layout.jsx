@@ -8,7 +8,7 @@ import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useStore } from '../../store/useStore.js'
 import { getMeApi } from '../../api/apiService.js'
 import { setGlobalCallbacks } from '../../api/realtimeService.js'
-import { initWebPush }        from '../../api/webPushService.js'
+import { silentSubscribeIfGranted, requestAndSubscribe } from '../../api/webPushService.js'
 import iconLight from '../../assets/icon_light.png'
 import iconDark from '../../assets/icon_dark.png'
 
@@ -107,6 +107,14 @@ export default function Layout() {
 
   const [checking, setChecking] = useState(true)
 
+  // ─── Estado permiso de notificaciones ───────────────────────────────────
+  // 'default' = no preguntado aún → mostrar botón
+  // 'granted' = activo → ocultar botón
+  // 'denied'  = bloqueado por usuario → no mostrar nada
+  const [notifPerm, setNotifPerm] = useState(() =>
+    ('Notification' in window ? Notification.permission : 'denied')
+  )
+
   // ─── Banner de robo cercano ─────────────────────────────────────────────
   const [nearbyBanner, setNearbyBanner] = useState(null)
   const nearbyTimerRef = useRef(null)
@@ -133,9 +141,9 @@ export default function Layout() {
         if (!data?.deviceIds) return
         if (data.token) localStorage.setItem('argus_token', data.token)
         refreshUser(data)
-        // Inicializar Web Push después de confirmar sesión válida.
-        // initWebPush es idempotente y silenciosa — no bloquea el render.
-        initWebPush()
+        // Si el permiso ya estaba concedido (sesión anterior), re-suscribir silenciosamente.
+        // Si es 'default', el botón de campana en la UI pedirá el permiso con gesto del usuario.
+        silentSubscribeIfGranted()
       })
       .catch(() => {})
       .finally(() => setChecking(false))
@@ -144,6 +152,11 @@ export default function Layout() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  async function handleEnableNotifs() {
+    const result = await requestAndSubscribe()
+    setNotifPerm(result)
+  }
 
   if (!user)     return <Navigate to="/login" replace />
   if (checking)  return null
@@ -191,6 +204,27 @@ export default function Layout() {
               color: 'var(--text2)', borderRadius: 8,
             }}
           >{isDark ? <IcSun /> : <IcMoon />}</button>
+
+          {/* Botón de notificaciones — solo visible si el permiso no está resuelto */}
+          {notifPerm === 'default' && (
+            <button
+              onClick={handleEnableNotifs}
+              aria-label="Activar notificaciones"
+              className="touch-target"
+              title="Activar notificaciones"
+              style={{ background: 'none', border: 'none', color: 'var(--text2)', borderRadius: 8, position: 'relative' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </svg>
+              {/* Punto naranja indicador */}
+              <div style={{
+                position: 'absolute', top: 6, right: 6,
+                width: 7, height: 7, borderRadius: '50%',
+                background: 'var(--accent)',
+              }} />
+            </button>
+          )}
 
           {/* Logout */}
           <button
@@ -337,6 +371,29 @@ export default function Layout() {
 
         {/* Footer sidebar */}
         <div style={{ padding: '12px 12px 16px', borderTop: '1px solid var(--border)' }}>
+
+          {/* Botón de notificaciones — solo si el permiso no está resuelto */}
+          {notifPerm === 'default' && (
+            <button
+              onClick={handleEnableNotifs}
+              aria-label="Activar notificaciones push"
+              style={{
+                width: '100%', marginBottom: 10,
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '9px 12px', borderRadius: 10,
+                background: 'var(--accent-10)',
+                border: '1px solid var(--accent-20)',
+                color: 'var(--accent)', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </svg>
+              Activar notificaciones
+            </button>
+          )}
+
           {/* Toggle tema */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
