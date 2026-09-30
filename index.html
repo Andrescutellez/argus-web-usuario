@@ -2,15 +2,14 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
       (function(){
         var m=window.matchMedia('(prefers-color-scheme: dark)');
         var el=document.createElement('link');
         el.rel='icon'; el.type='image/png';
-        el.href=m.matches?'/icon_dark.png?v=2':'/icon_light.png?v=2';
+        el.href=m.matches?'/icon_dark.png?v=3':'/icon_light.png?v=3';
         document.head.appendChild(el);
-        m.addEventListener('change',function(e){el.href=e.matches?'/icon_dark.png?v=2':'/icon_light.png?v=2';});
+        m.addEventListener('change',function(e){el.href=e.matches?'/icon_dark.png?v=3':'/icon_light.png?v=3';});
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
