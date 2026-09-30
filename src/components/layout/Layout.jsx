@@ -8,6 +8,7 @@ import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useStore } from '../../store/useStore.js'
 import { getMeApi } from '../../api/apiService.js'
 import { setGlobalCallbacks } from '../../api/realtimeService.js'
+import { initWebPush }        from '../../api/webPushService.js'
 import iconLight from '../../assets/icon_light.png'
 import iconDark from '../../assets/icon_dark.png'
 
@@ -132,6 +133,9 @@ export default function Layout() {
         if (!data?.deviceIds) return
         if (data.token) localStorage.setItem('argus_token', data.token)
         refreshUser(data)
+        // Inicializar Web Push después de confirmar sesión válida.
+        // initWebPush es idempotente y silenciosa — no bloquea el render.
+        initWebPush()
       })
       .catch(() => {})
       .finally(() => setChecking(false))
