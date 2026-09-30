@@ -4,6 +4,7 @@ import {
   getMotos, getMyProfile, updateMyProfile, changeUsername, checkUsername,
 } from '../api/apiService.js'
 import api from '../api/apiService.js'
+import { requestAndSubscribe } from '../api/webPushService.js'
 
 // ─── Componentes auxiliares de layout ────────────────────────────────────────
 
@@ -244,6 +245,10 @@ export default function ProfilePage() {
   const [loading,     setLoading]     = useState(true)
   const [profile,     setProfile]     = useState(null)
   const [profileLoad, setProfileLoad] = useState(true)
+
+  const [notifPerm, setNotifPerm] = useState(
+    () => ('Notification' in window ? Notification.permission : 'denied')
+  )
 
   // Campos de edición de perfil
   const [displayName, setDisplayName] = useState('')
@@ -509,8 +514,52 @@ export default function ProfilePage() {
         </>
       )}
 
-      {/* ── Cerrar sesión ── */}
+      {/* ── Notificaciones push ── */}
       <SectionLabel>CUENTA</SectionLabel>
+      {'Notification' in window && notifPerm !== 'denied' && notifPerm !== 'granted' && (
+        <button
+          onClick={async () => {
+            const result = await requestAndSubscribe()
+            setNotifPerm(result)
+          }}
+          style={{
+            width: '100%', padding: '13px 0', borderRadius: 14, marginBottom: 10,
+            border: '1px solid var(--border)', background: 'transparent',
+            color: 'var(--text2)', fontSize: 14, fontWeight: 500,
+            cursor: 'pointer', transition: 'all 0.15s', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'var(--accent-10, rgba(255,107,53,0.08))'
+            e.currentTarget.style.borderColor = 'var(--accent, #FF6B35)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = 'var(--border)'
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Activar notificaciones push
+        </button>
+      )}
+      {notifPerm === 'granted' && (
+        <div style={{
+          padding: '11px 16px', borderRadius: 14, marginBottom: 10,
+          border: '1px solid var(--border)', background: 'var(--card)',
+          color: 'var(--text3)', fontSize: 13, display: 'flex',
+          alignItems: 'center', gap: 8,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #FF6B35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Notificaciones activadas
+        </div>
+      )}
+
+      {/* ── Cerrar sesión ── */}
       <button
         onClick={logout}
         style={{

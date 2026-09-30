@@ -171,80 +171,6 @@ export default function Layout() {
     return (
       <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Top App Bar */}
-        <header role="banner" style={{
-          height: 56, flexShrink: 0,
-          background: 'var(--card)',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center',
-          padding: '0 14px',
-          position: 'sticky', top: 0, zIndex: 'var(--z-overlay)',
-        }}>
-          {/* Logo */}
-          <div style={{
-            width: 30, height: 30,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginRight: 10, flexShrink: 0,
-          }}>
-            <img src={navIcon} alt="Argus" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-          </div>
-
-          <span style={{
-            flex: 1, fontSize: 15, fontWeight: 700, color: 'var(--text1)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>{pageTitle}</span>
-
-          {/* Toggle tema */}
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            className="touch-target"
-            style={{
-              background: 'none', border: 'none',
-              color: 'var(--text2)', borderRadius: 8,
-            }}
-          >{isDark ? <IcSun /> : <IcMoon />}</button>
-
-          {/* Botón de notificaciones — solo visible si el permiso no está resuelto */}
-          {notifPerm === 'default' && (
-            <button
-              onClick={handleEnableNotifs}
-              aria-label="Activar notificaciones"
-              className="touch-target"
-              title="Activar notificaciones"
-              style={{ background: 'none', border: 'none', color: 'var(--text2)', borderRadius: 8, position: 'relative' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-              </svg>
-              {/* Punto naranja indicador */}
-              <div style={{
-                position: 'absolute', top: 6, right: 6,
-                width: 7, height: 7, borderRadius: '50%',
-                background: 'var(--accent)',
-              }} />
-            </button>
-          )}
-
-          {/* Logout */}
-          <button
-            onClick={logout}
-            aria-label="Cerrar sesión"
-            className="touch-target"
-            style={{
-              background: 'none',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              color: 'var(--text2)',
-              display: 'flex', alignItems: 'center', gap: 4,
-              fontSize: 11, padding: '0 10px',
-            }}
-          >
-            <IcLogout />
-            <span>Salir</span>
-          </button>
-        </header>
-
         {/* Contenido */}
         <main style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           <Outlet />
@@ -253,7 +179,7 @@ export default function Layout() {
         {/* Banner de robo cercano */}
         {nearbyBanner && (
           <div style={{
-            position: 'fixed', top: 60, left: 8, right: 8,
+            position: 'fixed', top: 8, left: 8, right: 8,
             zIndex: 9999,
             background: '#b71c1c', borderRadius: 12,
             padding: '10px 14px',
