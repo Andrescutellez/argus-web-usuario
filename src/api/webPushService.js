@@ -32,7 +32,11 @@ async function _doSubscribe() {
   const { data } = await api.get('/api/push/vapid-public-key')
   if (!data?.publicKey) throw new Error('Sin clave pública VAPID')
 
-  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+  // register() inicia la instalación pero el SW puede estar en 'installing' todavía.
+  // serviceWorker.ready espera hasta que haya un SW en estado 'active' — necesario
+  // antes de llamar pushManager.subscribe(), que falla si el SW no está activo.
+  await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+  const registration = await navigator.serviceWorker.ready
 
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly:      true,
