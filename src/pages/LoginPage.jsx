@@ -86,7 +86,6 @@ export default function LoginPage() {
                   background: mode === key ? '#1A56C9' : 'transparent',
                   color: mode === key ? '#fff' : 'rgba(255,255,255,0.35)',
                   cursor: 'pointer',
-                  boxShadow: mode === key ? '0 4px 14px rgba(26,86,201,0.4)' : 'none',
                   transition: 'background 0.15s, color 0.15s',
                 }}
               >
@@ -119,7 +118,7 @@ export default function LoginPage() {
               style={{
                 marginTop: 4, padding: '13px 0', borderRadius: 12, border: 'none',
                 fontSize: 14, fontWeight: 700, color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
-                background: 'linear-gradient(135deg, #1A56C9, #123E7A)',
+                background: '#1A56C9',
                 opacity: loading ? 0.6 : 1,
                 transition: 'opacity 0.15s, box-shadow 0.15s',
               }}

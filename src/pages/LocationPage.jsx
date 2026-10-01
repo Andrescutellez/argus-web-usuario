@@ -1078,7 +1078,6 @@ function MapFab({ children, onClick, active = false, activeColor = C.armed }) {
       style={{
         width: 44, height: 44, borderRadius: '50%', border: 'none',
         background: active ? activeColor : 'rgba(13,17,23,0.8)',
-        boxShadow: `0 2px 8px rgba(0,0,0,0.4)${active ? `, 0 0 12px ${activeColor}60` : ''}`,
         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
         backdropFilter: 'blur(8px)',
         transition: 'background 0.15s, box-shadow 0.15s',

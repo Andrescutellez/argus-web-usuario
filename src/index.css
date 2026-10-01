@@ -142,6 +142,7 @@ button, a, [role="button"] {
   cursor: pointer;
 }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
+button, [role="button"] { box-shadow: none !important; }
 
 /* ─── Leaflet ─── */
 .leaflet-container { background: var(--map-bg); }
