@@ -1,0 +1,15 @@
+{
+  "name": "Argus Secure — Mi Moto",
+  "short_name": "Argus",
+  "description": "Monitoreo y seguridad de tu moto en tiempo real",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080C12",
+  "theme_color": "#080C12",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/app-icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/app-icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable any" }
+  ]
+}
