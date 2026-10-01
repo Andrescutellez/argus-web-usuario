@@ -55,7 +55,7 @@ export default function LoginPage() {
       <div className="argus-fadein" style={{ width: '100%', maxWidth: 400, position: 'relative' }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <img src={logoDark} alt="Argus Secure" style={{ width: 220 }} />
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 8, letterSpacing: '0.3px' }}>
             Protección inteligente para tu moto
@@ -120,7 +120,6 @@ export default function LoginPage() {
                 marginTop: 4, padding: '13px 0', borderRadius: 12, border: 'none',
                 fontSize: 14, fontWeight: 700, color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
                 background: 'linear-gradient(135deg, #1A56C9, #123E7A)',
-                boxShadow: loading ? 'none' : '0 6px 20px rgba(26,86,201,0.4)',
                 opacity: loading ? 0.6 : 1,
                 transition: 'opacity 0.15s, box-shadow 0.15s',
               }}
@@ -131,12 +130,12 @@ export default function LoginPage() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 20 }}>
-          {isLogin ? '¿No tenés cuenta? ' : '¿Ya tenés cuenta? '}
+          {isLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
           <button onClick={toggle} style={{
             background: 'none', border: 'none', fontWeight: 700,
             color: 'rgba(255,255,255,0.7)', fontSize: 12, padding: 0, cursor: 'pointer',
           }}>
-            {isLogin ? 'Registrate' : 'Ingresar'}
+            {isLogin ? 'Regístrate' : 'Ingresar'}
           </button>
         </p>
       </div>

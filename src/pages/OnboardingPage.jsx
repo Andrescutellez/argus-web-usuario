@@ -280,7 +280,7 @@ export default function OnboardingPage() {
   const handleStep2 = async (e) => {
     e.preventDefault()
     if (!deviceIdInput.trim()) {
-      setError('Ingresá el ID del dispositivo')
+      setError('Ingresa el ID del dispositivo')
       return
     }
 
@@ -312,13 +312,13 @@ export default function OnboardingPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8"
-      style={{ background: 'var(--bg)' }}
+      style={{ background: '#000000' }}
     >
       <div className="w-full max-w-md">
 
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--blue)' }}>Argus</h1>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--blue)' }}>Argus Secure</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>
             Configuración inicial
           </p>
@@ -341,7 +341,7 @@ export default function OnboardingPage() {
                   Registrá tu moto
                 </h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>
-                  Ingresá los datos del vehículo donde instalarás el dispositivo Argus.
+                  Ingresa los datos del vehículo donde instalarás el dispositivo Argus.
                 </p>
               </div>
 
@@ -416,7 +416,7 @@ export default function OnboardingPage() {
                   Vinculá tu dispositivo
                 </h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>
-                  Escaneá el QR del dispositivo o ingresá el ID manualmente.
+                  Escanea el QR del dispositivo o ingresa el ID manualmente.
                 </p>
               </div>
 
