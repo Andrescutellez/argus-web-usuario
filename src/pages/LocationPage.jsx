@@ -1309,15 +1309,6 @@ function BottomPanel({
               </div>
             </div>
 
-            <span style={{
-              padding: '4px 10px', borderRadius: 6, flexShrink: 0,
-              background: armed ? 'var(--armed-10)' : 'transparent',
-              border: `1px solid ${armed ? 'var(--armed-20)' : 'transparent'}`,
-              color: armed ? 'var(--armed)' : 'var(--text3)',
-              fontSize: 10, fontWeight: 700,
-            }}>
-              {armed ? '● Armado' : '○ Desarmado'}
-            </span>
           </div>
 
           <div style={{ maxHeight: expanded ? 400 : 0, opacity: expanded ? 1 : 0,
