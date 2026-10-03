@@ -16,8 +16,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Polyline, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useStore }        from '../store/useStore'
-import { getDriveMetrics } from '../api/apiService'
+import { useStore }                         from '../store/useStore'
+import { getDriveMetrics, getGt06Trips, getGt06Trip } from '../api/apiService'
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 const BLUE   = '#1A56C9'
@@ -650,11 +650,16 @@ function DayNav({ date, onPrev, onNext }) {
 // ─── Componente principal ──────────────────────────────────────────────────────
 
 export default function DrivingPage() {
-  const { deviceId } = useStore()
+  const { deviceId, deviceProtocol } = useStore()
+  const isGT06 = deviceProtocol === 'gt06'
 
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(false)
   const [data14,   setData14]   = useState(null)
+
+  // GT06
+  const [gt06Trips,      setGt06Trips]     = useState([])
+  const [gt06SelTrip,    setGt06SelTrip]   = useState(null) // viaje completo con puntos
 
   const [thisWeek,      setThisWeek]   = useState(true)
   const [selectedDate,  setSelDate]    = useState(() => { const d=new Date(); d.setHours(0,0,0,0); return d })
@@ -664,16 +669,30 @@ export default function DrivingPage() {
 
   const tileUrl = useTileUrl()
 
-  useEffect(() => { load() }, [deviceId])
+  useEffect(() => { load() }, [deviceId, isGT06])
 
   async function load() {
     if (!deviceId) return
     setLoading(true); setError(false)
     try {
-      const res = await getDriveMetrics(deviceId, 14, 80)
-      setData14(res.data)
+      if (isGT06) {
+        const res = await getGt06Trips(deviceId, 14, 100)
+        setGt06Trips(res.data?.trips ?? [])
+      } else {
+        const res = await getDriveMetrics(deviceId, 14, 80)
+        setData14(res.data)
+      }
     } catch { setError(true) }
     setLoading(false)
+  }
+
+  async function openGt06Trip(trip) {
+    try {
+      const res = await getGt06Trip(deviceId, trip._id)
+      setGt06SelTrip(res.data)
+    } catch {
+      setGt06SelTrip(trip) // fallback: mostrar sin puntos
+    }
   }
 
   // ── Sesiones del período ─────────────────────────────────────────────────────
@@ -806,6 +825,226 @@ export default function DrivingPage() {
     </div>
   )
 
+  // ── Render GT06 ──────────────────────────────────────────────────────────────
+  if (isGT06) {
+    const cut      = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const filtered = thisWeek
+      ? gt06Trips.filter(t => new Date(t.startTime) >= cut)
+      : gt06Trips.filter(t => new Date(t.startTime) < cut)
+
+    // Aggregates
+    const totalKm   = filtered.reduce((s, t) => s + (t.distanceM || 0) / 1000, 0)
+    const maxSpd    = filtered.reduce((m, t) => Math.max(m, t.maxSpeedKmh || 0), 0)
+    const speedings = filtered.reduce((s, t) => s + (t.speedingEvents?.length ?? t.speedingCount ?? 0), 0)
+
+    return (
+      <div style={{ padding:24, maxWidth:840, background:'var(--bg)', minHeight:'100vh' }}>
+        <style>{`.leaflet-container{z-index:0}`}</style>
+
+        {/* Modal GT06 */}
+        {gt06SelTrip && (
+          <div onClick={() => setGt06SelTrip(null)}
+            style={{ position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,.55)',
+                display:'flex', alignItems:'center', justifyContent:'center', padding:20, backdropFilter:'blur(2px)' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background:'var(--card)', borderRadius:18,
+                border:'1px solid var(--border)', width:'100%', maxWidth:540, overflow:'hidden',
+                boxShadow:'0 24px 64px rgba(0,0,0,.3)', maxHeight:'90vh', overflowY:'auto' }}>
+
+              {/* Mapa */}
+              <div style={{ height:260, position:'relative' }}>
+                {(gt06SelTrip.points?.length >= 2) ? (
+                  <MapContainer
+                    bounds={getBounds(gt06SelTrip.points.map(p => [p.lat, p.lon]))}
+                    boundsOptions={{ padding:[24,24] }}
+                    style={{ height:'100%', width:'100%' }} zoomControl scrollWheelZoom attributionControl={false}>
+                    <TileLayer url={tileUrl} subdomains={['a','b','c','d']} />
+                    <Polyline positions={gt06SelTrip.points.map(p => [p.lat, p.lon])}
+                      color={BLUE} weight={4} lineCap="round" lineJoin="round" />
+                    <CircleMarker center={[gt06SelTrip.points[0].lat, gt06SelTrip.points[0].lon]}
+                      radius={7} fillColor={GREEN} fillOpacity={1} color="white" weight={2} />
+                    <CircleMarker center={[gt06SelTrip.points[gt06SelTrip.points.length-1].lat, gt06SelTrip.points[gt06SelTrip.points.length-1].lon]}
+                      radius={7} fillColor={BLUE} fillOpacity={1} color="white" weight={2} />
+                  </MapContainer>
+                ) : (
+                  <div style={{ height:'100%', background:'var(--card-alt)', display:'flex',
+                      alignItems:'center', justifyContent:'center', flexDirection:'column', gap:8 }}>
+                    <span style={{ fontSize:28 }}>📍</span>
+                    <span style={{ fontSize:12, color:'var(--text3)' }}>Sin datos GPS</span>
+                  </div>
+                )}
+                <button onClick={() => setGt06SelTrip(null)}
+                  style={{ position:'absolute', top:10, right:10, zIndex:1000,
+                    width:30, height:30, borderRadius:'50%', background:'rgba(0,0,0,.55)', border:'none',
+                    color:'#fff', fontSize:15, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+              </div>
+
+              <div style={{ padding:'18px 20px 24px' }}>
+                <div style={{ fontSize:15, fontWeight:700, color:'var(--text1)', marginBottom:4 }}>
+                  {dayLabel(new Date(gt06SelTrip.startTime))}
+                </div>
+                <div style={{ fontSize:12, color:'var(--text2)', marginBottom:16 }}>
+                  {fmtTime(gt06SelTrip.startTime)} – {fmtTime(gt06SelTrip.endTime)} · {fmtKm((gt06SelTrip.distanceM || 0) / 1000)}
+                </div>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {(gt06SelTrip.avgSpeedKmh > 0) && (
+                    <div style={{ flex:1, minWidth:80, background:'var(--bg)', borderRadius:10,
+                        border:'1px solid var(--border)', padding:'10px', textAlign:'center' }}>
+                      <div style={{ fontSize:17, fontWeight:800, color:'var(--text1)' }}>
+                        {gt06SelTrip.avgSpeedKmh.toFixed(0)} km/h</div>
+                      <div style={{ fontSize:10, color:'var(--text2)' }}>Prom.</div>
+                    </div>
+                  )}
+                  {(gt06SelTrip.maxSpeedKmh > 0) && (
+                    <div style={{ flex:1, minWidth:80, background:'var(--bg)', borderRadius:10,
+                        border:'1px solid var(--border)', padding:'10px', textAlign:'center' }}>
+                      <div style={{ fontSize:17, fontWeight:800,
+                          color: gt06SelTrip.maxSpeedKmh > 80 ? '#EF4444' : 'var(--text1)' }}>
+                        {gt06SelTrip.maxSpeedKmh.toFixed(0)} km/h</div>
+                      <div style={{ fontSize:10, color:'var(--text2)' }}>Máx.</div>
+                    </div>
+                  )}
+                  <div style={{ flex:1, minWidth:80, background:'var(--bg)', borderRadius:10,
+                      border:'1px solid var(--border)', padding:'10px', textAlign:'center' }}>
+                    <div style={{ fontSize:17, fontWeight:800, color:'var(--text1)' }}>
+                      {fmtSec(gt06SelTrip.movingSec)}</div>
+                    <div style={{ fontSize:10, color:'var(--text2)' }}>Conduciendo</div>
+                  </div>
+                  {gt06SelTrip.stoppedSec > 60 && (
+                    <div style={{ flex:1, minWidth:80, background:'var(--bg)', borderRadius:10,
+                        border:'1px solid var(--border)', padding:'10px', textAlign:'center' }}>
+                      <div style={{ fontSize:17, fontWeight:800, color:'var(--text2)' }}>
+                        {fmtSec(gt06SelTrip.stoppedSec)}</div>
+                      <div style={{ fontSize:10, color:'var(--text2)' }}>Detenido</div>
+                    </div>
+                  )}
+                </div>
+                {((gt06SelTrip.speedingEvents?.length ?? gt06SelTrip.speedingCount ?? 0) > 0) && (
+                  <div style={{ marginTop:12, background:'rgba(245,158,11,.08)', border:'1px solid rgba(245,158,11,.3)',
+                      borderRadius:10, padding:'10px 14px', display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:16 }}>⚠️</span>
+                    <span style={{ fontSize:12, color:'#F59E0B' }}>
+                      {gt06SelTrip.speedingEvents?.length ?? gt06SelTrip.speedingCount} exceso(s) de velocidad (&gt; 80 km/h)
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div style={{ marginBottom:20 }}>
+          <h1 style={{ margin:0, fontSize:22, fontWeight:700, color:'var(--text1)' }}>Conducción</h1>
+          <p style={{ margin:'4px 0 0', fontSize:13, color:'var(--text2)' }}>Trayectos GPS registrados</p>
+        </div>
+
+        {/* Toggle semana */}
+        <div style={{ display:'inline-flex', background:'var(--card)', border:'1px solid var(--border)',
+            borderRadius:12, padding:4, gap:4, marginBottom:20 }}>
+          {['Esta semana','Semana pasada'].map((lbl, i) => {
+            const active = i === 0 ? thisWeek : !thisWeek
+            return (
+              <button key={lbl} onClick={() => setThisWeek(i === 0)}
+                style={{ padding:'8px 20px', borderRadius:10, border:'none', cursor:'pointer',
+                    background: active ? 'var(--orange)' : 'transparent',
+                    color: active ? '#fff' : 'var(--text2)',
+                    fontWeight: active ? 600 : 400, fontSize:13, transition:'all .2s' }}>
+                {lbl}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Métricas agregadas */}
+        {filtered.length > 0 && (
+          <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
+            <div style={{ flex:1, minWidth:110, background:'var(--card)', border:'1px solid var(--border)',
+                borderRadius:12, padding:'14px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:'1.2px', color:'var(--text3)',
+                  textTransform:'uppercase', marginBottom:6 }}>🛣️ Distancia</div>
+              <div style={{ fontSize:20, fontWeight:800, color:'var(--text1)' }}>{fmtKm(totalKm)}</div>
+            </div>
+            <div style={{ flex:1, minWidth:110, background:'var(--card)', border:'1px solid var(--border)',
+                borderRadius:12, padding:'14px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:'1.2px', color:'var(--text3)',
+                  textTransform:'uppercase', marginBottom:6 }}>🗺️ Trayectos</div>
+              <div style={{ fontSize:20, fontWeight:800, color:'var(--text1)' }}>{filtered.length}</div>
+            </div>
+            <div style={{ flex:1, minWidth:110, background:'var(--card)', border:'1px solid var(--border)',
+                borderRadius:12, padding:'14px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:'1.2px', color:'var(--text3)',
+                  textTransform:'uppercase', marginBottom:6 }}>⚡ Vel. máx.</div>
+              <div style={{ fontSize:20, fontWeight:800,
+                  color: maxSpd > 80 ? '#EF4444' : 'var(--text1)' }}>
+                {maxSpd > 0 ? `${maxSpd.toFixed(0)} km/h` : '—'}
+              </div>
+            </div>
+            {speedings > 0 && (
+              <div style={{ flex:1, minWidth:110, background:'rgba(245,158,11,.06)', border:'1px solid rgba(245,158,11,.25)',
+                  borderRadius:12, padding:'14px 16px', textAlign:'center' }}>
+                <div style={{ fontSize:9, fontWeight:700, letterSpacing:'1.2px', color:'var(--text3)',
+                    textTransform:'uppercase', marginBottom:6 }}>⚠️ Excesos</div>
+                <div style={{ fontSize:20, fontWeight:800, color:'#F59E0B' }}>{speedings}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lista de trayectos */}
+        <div style={{ fontSize:14, fontWeight:700, color:'var(--text1)', marginBottom:12 }}>Trayectos</div>
+
+        {filtered.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'60px 24px', color:'var(--text3)' }}>
+            <div style={{ fontSize:56, marginBottom:16 }}>🏍️</div>
+            <div style={{ fontSize:16, fontWeight:700, color:'var(--text1)', marginBottom:8 }}>
+              {thisWeek ? 'Tu Argus aún no ha salido a rodar' : 'Sin trayectos esta semana'}
+            </div>
+            <div style={{ fontSize:13, lineHeight:1.6 }}>
+              Los trayectos aparecen aquí en cuanto<br />el dispositivo registre GPS por al menos 500 m.
+            </div>
+          </div>
+        ) : filtered.map(trip => {
+          const km       = (trip.distanceM || 0) / 1000
+          const spCount  = trip.speedingEvents?.length ?? trip.speedingCount ?? 0
+          return (
+            <div key={trip._id} onClick={() => openGt06Trip(trip)}
+              style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:14,
+                  padding:'14px 16px', marginBottom:10, cursor:'pointer',
+                  display:'flex', justifyContent:'space-between', alignItems:'center',
+                  transition:'border-color .2s' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor='var(--orange)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--text1)' }}>
+                  {dayLabel(new Date(trip.startTime))}
+                </div>
+                <div style={{ fontSize:11, color:'var(--text2)', marginTop:2 }}>
+                  {fmtTime(trip.startTime)} – {fmtTime(trip.endTime)}
+                </div>
+              </div>
+              <div style={{ textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
+                <div style={{ fontSize:15, fontWeight:700, color:'var(--text1)' }}>{fmtKm(km)}</div>
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                  {trip.maxSpeedKmh > 0 && (
+                    <Chip text={`⚡ ${trip.maxSpeedKmh.toFixed(0)} km/h`}
+                      color="var(--text2)" bg="var(--card)" border="var(--border)" />
+                  )}
+                  {spCount > 0 ? (
+                    <Chip text={`⚠️ ${spCount} exceso${spCount>1?'s':''}`}
+                      color="#F59E0B" bg="rgba(245,158,11,.1)" border="rgba(245,158,11,.3)" />
+                  ) : (
+                    <Chip text="✅ Sin excesos" color="#22C55E" bg="rgba(34,197,94,.1)" border="rgba(34,197,94,.3)" />
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // ── Render ESP32 (IRC) ────────────────────────────────────────────────────────
   const clr = ircColor(displayIrc)
 
   return (

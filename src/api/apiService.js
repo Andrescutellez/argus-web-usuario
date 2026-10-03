@@ -409,6 +409,20 @@ export const getCrimeNacional = () => api.get('/api/crime/nacional')
 export const getDriveMetrics = (deviceId, days = 14, speedLimit = 80) =>
   api.get(`/api/drive/metrics/${deviceId}?days=${days}&speedLimit=${speedLimit}`)
 
+/**
+ * @brief Viajes GPS de un dispositivo GT06 (J16 / Argus One).
+ * ENDPOINT: GET /api/drive/gt06/:deviceId/trips?days=N&limit=L
+ */
+export const getGt06Trips = (deviceId, days = 14, limit = 100) =>
+  api.get(`/api/drive/gt06/${deviceId}/trips?days=${days}&limit=${limit}`)
+
+/**
+ * @brief Viaje GT06 individual con array completo de puntos GPS.
+ * ENDPOINT: GET /api/drive/gt06/:deviceId/trips/:tripId
+ */
+export const getGt06Trip = (deviceId, tripId) =>
+  api.get(`/api/drive/gt06/${deviceId}/trips/${tripId}`)
+
 // ─── Suscripción ──────────────────────────────────────────────────────────
 
 /**
